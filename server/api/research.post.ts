@@ -72,8 +72,6 @@ export default defineEventHandler(async (event) => {
         pLimitInstance: serverPLimit,
       })
         .then((result) => {
-          const finalData = `data: ${JSON.stringify({ type: 'complete', learnings: result.learnings })}\n\n`
-          controller.enqueue(encoder.encode(finalData))
           controller.close()
         })
         .catch((error) => {
