@@ -81,6 +81,8 @@
     "depthHelp": "반복(iteration) 횟수입니다.",
     "breadth": "너비(Breadth)",
     "breadthHelp": "첫 번째 반복에서의 검색 횟수입니다. 각 반복의 검색 너비는 이전 반복의 절반입니다.",
+    "required": "필수 입력 항목입니다.",
+    "integerRange": "{min}에서 {max} 사이의 정수를 입력하세요.",
     "start": "연구 시작",
     "researching": "연구 중..."
   },
@@ -89,6 +91,7 @@
     "description": "AI가 연구 방향을 명확히 하기 위해 몇 가지 후속 질문을 합니다.",
     "waiting": "모델 피드백을 기다리는 중...",
     "submit": "답변 제출",
+    "continue": "연구 계속하기",
     "error": "피드백을 가져오는 중 오류 발생: {0}",
     "noQuestions": "모델이 후속 질문을 반환하지 않았습니다."
   },
@@ -134,6 +137,13 @@
   },
   "fullscreen": "전체 화면",
   "exitFullscreen": "전체 화면 종료",
+  "graphControls": {
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "fitView": "그래프를 화면에 맞추기",
+    "lockView": "그래프 상호작용 잠금",
+    "unlockView": "그래프 상호작용 잠금 해제"
+  },
   "serverMode": {
     "title": "서버 모드",
     "description": "현재 서버 모드로 실행 중입니다. 모든 설정은 서버에서 제공하므로 API 키를 직접 설정할 필요가 없습니다.",
@@ -161,8 +171,34 @@
     "breadth": "너비",
     "questions": "질문 수"
   },
+  "researchSession": {
+    "status": {
+      "idle": "준비",
+      "running": "진행 중",
+      "awaiting-input": "답변 대기 중",
+      "cancelling": "취소 중",
+      "completed": "완료됨",
+      "failed": "실패",
+      "cancelled": "취소됨",
+      "timed-out": "시간 초과"
+    },
+    "phase": {
+      "feedback": "모델 피드백",
+      "research": "웹 연구",
+      "report": "연구 보고서"
+    },
+    "noFeedback": "피드백 생성 결과 질문이 없습니다.",
+    "noLearnings": "연구가 완료되었지만 학습 내용이 없습니다.",
+    "noReport": "보고서 생성 결과 내용이 없습니다.",
+    "timeoutMessage": "작업이 제한 시간을 초과했습니다. 지금 다시 시도할 수 있습니다."
+  },
   "common": {
     "delete": "삭제",
-    "cancel": "취소"
+    "cancel": "취소",
+    "language": "언어",
+    "showPassword": "비밀번호 표시",
+    "hidePassword": "비밀번호 숨기기",
+    "useLightTheme": "라이트 테마 사용",
+    "useDarkTheme": "다크 테마 사용"
   }
 }
