@@ -18,20 +18,6 @@
   const runtimeConfig = useRuntimeConfig()
   const isServerMode = computed(() => runtimeConfig.public.serverMode)
 
-  // Server mode configuration
-  const serverConfig = computed(() => ({
-    aiProvider: runtimeConfig.public.aiProvider,
-    aiModel: runtimeConfig.public.aiModel,
-    aiContextSize: runtimeConfig.public.aiContextSize,
-    webSearchProvider: runtimeConfig.public.webSearchProvider,
-    webSearchConcurrencyLimit: runtimeConfig.public.webSearchConcurrencyLimit,
-    webSearchSearchLanguage: runtimeConfig.public.webSearchSearchLanguage,
-    tavilyAdvancedSearch: runtimeConfig.public.tavilyAdvancedSearch,
-    tavilySearchTopic: runtimeConfig.public.tavilySearchTopic,
-    googlePseId: runtimeConfig.public.googlePseId,
-  }))
-
-
   const loadingAiModels = ref(false)
   const aiModelOptions = ref<string[]>([])
   /** If loading AI models failed, use a plain input to improve UX */
@@ -283,7 +269,11 @@
               </UFormField>
               <UFormField :label="$t('settings.ai.model')" required>
                 <UInputMenu
-                  v-if="aiModelOptions.length && !isLoadAiModelsFailed && !isServerMode"
+                  v-if="
+                    aiModelOptions.length &&
+                    !isLoadAiModelsFailed &&
+                    !isServerMode
+                  "
                   v-model="config.ai.model"
                   class="w-full"
                   :items="aiModelOptions"
@@ -457,7 +447,11 @@
       <template #footer>
         <div class="flex items-center justify-between gap-2 w-full">
           <p class="text-sm text-gray-500">
-            {{ isServerMode ? $t('serverMode.configNotice') : $t('settings.disclaimer') }}
+            {{
+              isServerMode
+                ? $t('serverMode.configNotice')
+                : $t('settings.disclaimer')
+            }}
           </p>
           <UButton
             v-if="!isServerMode"

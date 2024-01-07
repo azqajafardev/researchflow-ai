@@ -18,6 +18,7 @@
           </div>
           <div class="mx-auto sm:ml-auto sm:mr-0 flex items-center gap-2">
             <GitHubButton />
+            <HistoryModal />
             <ConfigManager ref="configManagerRef" />
             <ColorModeButton />
             <LangSwitcher />
@@ -49,8 +50,8 @@
           ref="feedbackRef"
           @submit="startDeepSearch"
         />
-        <DeepResearch ref="deepResearchRef" @complete="generateReport" />
-        <ResearchReport ref="reportRef" />
+        <DeepResearch ref="deepResearchRef" @complete="handleResearchComplete" />
+        <ResearchReport ref="reportRef" @complete="handleReportComplete" />
       </div>
     </UContainer>
     <AutoUpdateToast />
@@ -66,6 +67,8 @@
   import type { ResearchInputData } from '@/components/ResearchForm.vue'
   import type { ResearchFeedbackResult } from '@/components/ResearchFeedback.vue'
   import type { ResearchResult } from '~~/lib/core/deep-research'
+  import type { ResearchHistoryItem } from '~/types/history'
+  import { useHistory } from '~/composables/useHistory'
   import {
     feedbackInjectionKey,
     formInjectionKey,
@@ -107,5 +110,60 @@
 
   async function generateReport() {
     reportRef.value?.generateReport()
+  }
+
+  async function handleResearchComplete() {
+    // 研究完成后立即保存历史记录（包含完整数据）
+    const { addHistoryItem } = useHistory()
+    if (researchResult.value.learnings.length > 0) {
+      addHistoryItem({
+        title: form.value.query,
+        query: form.value.query,
+        breadth: form.value.breadth,
+        depth: form.value.depth,
+        numQuestions: form.value.numQuestions,
+        feedback: [...feedback.value],
+        learnings: [...researchResult.value.learnings],
+        report: '' // 初始为空，将在报告生成后通过 complete 事件更新
+      })
+    }
+    
+    // 触发报告生成
+    await generateReport()
+  }
+
+  function handleReportComplete(report: string) {
+    // 报告生成完成后更新历史记录
+    const { updateHistoryItem, findHistoryItemByQuery } = useHistory()
+    const existingItem = findHistoryItemByQuery(form.value.query)
+    if (existingItem) {
+      updateHistoryItem(existingItem.id, {
+        report,
+        learnings: [...researchResult.value.learnings],
+        feedback: [...feedback.value]
+      })
+    }
+  }
+
+  function loadHistoryItem(item: ResearchHistoryItem) {
+    // 加载历史记录
+    form.value = {
+      query: item.query,
+      breadth: item.breadth,
+      depth: item.depth,
+      numQuestions: item.numQuestions
+    }
+    
+    feedback.value = [...item.feedback]
+    researchResult.value = {
+      learnings: [...item.learnings]
+    }
+    
+    // 如果历史记录中有报告，直接显示，不重新生成
+    if (item.report && reportRef.value) {
+      nextTick(() => {
+        reportRef.value?.displayReport(item.report)
+      })
+    }
   }
 </script>

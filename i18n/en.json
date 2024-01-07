@@ -141,5 +141,25 @@
     "webSearchProvider": "Web Search Provider",
     "searchLanguage": "Search Language",
     "configNotice": "Current configuration is set by the server administrator. Contact the administrator to make changes."
+  },
+  "history": {
+    "title": "History",
+    "export": "Export",
+    "import": "Import",
+    "empty": "No history records",
+    "load": "Load",
+    "delete": "Delete",
+    "deleteAll": "Delete All",
+    "confirmDelete": "Confirm deletion of this history record?",
+    "confirmDeleteAll": "Confirm deletion of all history records?",
+    "importSuccess": "Import successful",
+    "importFailed": "Import failed",
+    "depth": "Depth",
+    "breadth": "Breadth",
+    "questions": "Questions"
+  },
+  "common": {
+    "delete": "Delete",
+    "cancel": "Cancel"
   }
 }

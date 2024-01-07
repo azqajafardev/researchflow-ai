@@ -137,5 +137,25 @@
     "webSearchProvider": "Zoekmachine provider",
     "searchLanguage": "Zoektaal",
     "configNotice": "Huidige configuratie is ingesteld door de serverbeheerder. Neem contact op met de beheerder voor wijzigingen."
+  },
+  "history": {
+    "title": "Geschiedenis",
+    "export": "Exporteren",
+    "import": "Importeren",
+    "empty": "Geen geschiedenisrecords",
+    "load": "Laden",
+    "delete": "Verwijderen",
+    "confirmDelete": "Bevestig verwijdering van dit geschiedenisrecord?",
+    "deleteAll": "Alles verwijderen",
+    "confirmDeleteAll": "Bevestig verwijdering van alle geschiedenisrecords?",
+    "importSuccess": "Importeren gelukt",
+    "importFailed": "Importeren mislukt",
+    "depth": "Diepte",
+    "breadth": "Breedte",
+    "questions": "Vragen"
+  },
+  "common": {
+    "delete": "Verwijderen",
+    "cancel": "Annuleren"
   }
 }

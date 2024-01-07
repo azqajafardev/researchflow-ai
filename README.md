@@ -37,6 +37,10 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 
 ## Recent updates
 
+25/07/24
+
+- Added: Research history management - Export/import individual history records, delete all records
+
 25/07/23
 
 - Added: Server Mode - Deploy with environment variables, users don't need to configure API keys

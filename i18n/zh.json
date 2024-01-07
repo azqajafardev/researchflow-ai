@@ -141,5 +141,25 @@
     "webSearchProvider": "搜索服务提供商",
     "searchLanguage": "搜索语言",
     "configNotice": "当前配置由服务器管理员设置，如需修改请联系管理员。"
+  },
+  "history": {
+    "title": "历史记录",
+    "export": "导出",
+    "import": "导入",
+    "empty": "暂无历史记录",
+    "load": "加载",
+    "delete": "删除",
+    "confirmDelete": "确认删除这条历史记录？",
+    "deleteAll": "删除全部",
+    "confirmDeleteAll": "确认删除所有历史记录？",
+    "importSuccess": "导入成功",
+    "importFailed": "导入失败",
+    "depth": "深度",
+    "breadth": "广度",
+    "questions": "问题数"
+  },
+  "common": {
+    "delete": "删除",
+    "cancel": "取消"
   }
 }

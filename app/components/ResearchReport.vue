@@ -181,6 +181,9 @@
             `${index + 1}. [${item.title || item.url}](${item.url})`,
         )
         .join('\n')}`
+
+      // 触发完成事件
+      emit('complete', reportContent.value)
     } catch (e: any) {
       console.error(`Generate report failed`, e)
       error.value = t('researchReport.generateFailed', [e.message])
@@ -261,10 +264,23 @@
     }
   }
 
+  const emit = defineEmits<{
+    (e: 'complete', report: string): void
+  }>()
+
+  function displayReport(report: string) {
+    // 直接显示已有的报告内容
+    reportContent.value = report
+    reasoningContent.value = '' // 清空推理内容，因为不是新生成的
+    loading.value = false
+    error.value = ''
+  }
+
   defineExpose({
     generateReport,
     exportToPdf,
     exportToMarkdown,
+    displayReport,
   })
 </script>
 
