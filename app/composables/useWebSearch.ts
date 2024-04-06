@@ -7,12 +7,6 @@ type WebSearchOptions = {
   lang?: string
 }
 
-export type WebSearchResult = {
-  content: string
-  url: string
-  title?: string
-}
-
 type WebSearchFunction = (
   query: string,
   options: WebSearchOptions,
