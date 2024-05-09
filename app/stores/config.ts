@@ -11,16 +11,15 @@ function validateConfig(config: Config) {
   if (ws.provider === 'tavily' && !ws.apiKey) return false
   // Either apiBase or apiKey is required for firecrawl
   if (ws.provider === 'firecrawl' && !ws.apiBase && !ws.apiKey) return false
-  if (ws.provider === 'google-pse' && (!ws.apiKey || !ws.googlePseId)) return false; // Require API Key and PSE ID
-  if (typeof ws.concurrencyLimit !== 'undefined' && ws.concurrencyLimit! < 1)
-    return false
+  if (ws.provider === 'google-pse' && (!ws.apiKey || !ws.googlePseId)) return false // Require API Key and PSE ID
+  if (typeof ws.concurrencyLimit !== 'undefined' && ws.concurrencyLimit! < 1) return false
   return true
 }
 
 export const useConfigStore = defineStore('config', () => {
   const runtimeConfig = useRuntimeConfig()
   const isServerMode = computed(() => runtimeConfig.public.serverMode)
-  
+
   // Server mode configuration
   const serverConfig = computed(() => ({
     aiProvider: runtimeConfig.public.aiProvider,
@@ -46,35 +45,35 @@ export const useConfigStore = defineStore('config', () => {
     },
   } satisfies Config)
 
-  const serverConfigRef = computed(() => ({
-    ai: {
-      provider: serverConfig.value.aiProvider as any,
-      model: serverConfig.value.aiModel,
-      contextSize: serverConfig.value.aiContextSize,
-      apiKey: '******',
-      apiBase: undefined,
-    },
-    webSearch: {
-      provider: serverConfig.value.webSearchProvider as any,
-      concurrencyLimit: serverConfig.value.webSearchConcurrencyLimit,
-      searchLanguage: serverConfig.value.webSearchSearchLanguage as any,
-      tavilyAdvancedSearch: serverConfig.value.tavilyAdvancedSearch,
-      tavilySearchTopic: serverConfig.value.tavilySearchTopic as any,
-      googlePseId: serverConfig.value.googlePseId,
-      apiKey: '******',
-      apiBase: undefined,
-    },
-  } satisfies Config))
+  const serverConfigRef = computed(
+    () =>
+      ({
+        ai: {
+          provider: serverConfig.value.aiProvider as any,
+          model: serverConfig.value.aiModel,
+          contextSize: serverConfig.value.aiContextSize,
+          apiKey: '******',
+          apiBase: undefined,
+        },
+        webSearch: {
+          provider: serverConfig.value.webSearchProvider as any,
+          concurrencyLimit: serverConfig.value.webSearchConcurrencyLimit,
+          searchLanguage: serverConfig.value.webSearchSearchLanguage as any,
+          tavilyAdvancedSearch: serverConfig.value.tavilyAdvancedSearch,
+          tavilySearchTopic: serverConfig.value.tavilySearchTopic as any,
+          googlePseId: serverConfig.value.googlePseId,
+          apiKey: '******',
+          apiBase: undefined,
+        },
+      }) satisfies Config,
+  )
 
   const config = computed(() => {
     return isServerMode.value ? serverConfigRef.value : localConfig.value
   })
   // The version user dismissed the update notification
-  const dismissUpdateVersion = useLocalStorage<string>(
-    'dismiss-update-version',
-    '',
-  )
-  
+  const dismissUpdateVersion = useLocalStorage<string>('dismiss-update-version', '')
+
   // In server mode, config is always valid since it's handled by the server
   const isConfigValid = computed(() => {
     if (isServerMode.value) return true
@@ -87,7 +86,7 @@ export const useConfigStore = defineStore('config', () => {
   })
   const webSearchApiBase = computed(() => {
     if (isServerMode.value) return '' // Not used in server mode
-    
+
     const { webSearch } = config.value
     if (webSearch.provider === 'tavily') {
       return

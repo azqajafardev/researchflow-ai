@@ -53,17 +53,8 @@
       {{ $t('webBrowsing.visitedUrls') }}
     </h3>
     <ul v-if="node.searchResults?.length" class="list-disc list-inside">
-      <li
-        v-for="(item, index) in node.searchResults"
-        class="whitespace-pre-wrap break-all"
-        :key="index"
-      >
-        <UButton
-          class="!p-0 contents"
-          variant="link"
-          :href="item.url"
-          target="_blank"
-        >
+      <li v-for="(item, index) in node.searchResults" class="whitespace-pre-wrap break-all" :key="index">
+        <UButton class="!p-0 contents" variant="link" :href="item.url" target="_blank">
           {{ item.title || item.url }}
         </UButton>
       </li>
@@ -79,10 +70,7 @@
       v-if="node.generateLearningsReasoning"
       v-model="node.generateLearningsReasoning"
       class="my-2"
-      :loading="
-        node.status === 'processing_serach_result_reasoning' ||
-        node.status === 'processing_serach_result'
-      "
+      :loading="node.status === 'processing_serach_result_reasoning' || node.status === 'processing_serach_result'"
     />
     <template v-for="({ learning }, index) in node.learnings" :key="index">
       <p
@@ -104,10 +92,7 @@
       <ReasoningAccordion
         v-if="node.generateQueriesReasoning"
         v-model="node.generateQueriesReasoning"
-        :loading="
-          node.status === 'generating_query_reasoning' ||
-          node.status === 'generating_query'
-        "
+        :loading="node.status === 'generating_query_reasoning' || node.status === 'generating_query'"
       />
     </template>
   </div>

@@ -1,8 +1,5 @@
 <script setup lang="ts">
-  import {
-    feedbackInjectionKey,
-    formInjectionKey,
-  } from '~/constants/injection-keys'
+  import { feedbackInjectionKey, formInjectionKey } from '~/constants/injection-keys'
   import { useServerMode } from '~/composables/useServerMode'
 
   export interface ResearchFeedbackResult {
@@ -62,16 +59,14 @@
         language: t('language', {}, { locale: locale.value }),
         aiConfig: config.value.ai,
       })
-      
+
       for await (const chunk of chunks) {
         if (chunk.type === 'reasoning') {
           reasoningContent.value += chunk.delta
         } else if (chunk.type === 'error') {
           error.value = chunk.message
         } else if (chunk.type === 'object') {
-          const questions = chunk.value.questions!.filter(
-            (s: any) => typeof s === 'string',
-          )
+          const questions = chunk.value.questions!.filter((s: any) => typeof s === 'string')
           // Incrementally update modelValue
           for (let i = 0; i < questions.length; i += 1) {
             if (feedback.value[i]) {
@@ -87,10 +82,7 @@
           error.value = t('invalidStructuredOutput')
         }
       }
-      console.log(
-        `[ResearchFeedback] query: ${form.value.query}, feedback:`,
-        feedback.value,
-      )
+      console.log(`[ResearchFeedback] query: ${form.value.query}, feedback:`, feedback.value)
       // Check if model returned questions
       if (!feedback.value.length) {
         error.value = t('modelFeedback.noQuestions')
@@ -139,11 +131,7 @@
 
         <ReasoningAccordion v-model="reasoningContent" :loading="isLoading" />
 
-        <div
-          v-for="(feedback, index) in feedback"
-          class="flex flex-col gap-2"
-          :key="index"
-        >
+        <div v-for="(feedback, index) in feedback" class="flex flex-col gap-2" :key="index">
           {{ feedback.assistantQuestion }}
           <UInput v-model="feedback.userAnswer" />
         </div>

@@ -1,11 +1,7 @@
 import { createDeepSeek } from '@ai-sdk/deepseek'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { createOpenAI } from '@ai-sdk/openai'
-import {
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-  type LanguageModelV1,
-} from 'ai'
+import { extractReasoningMiddleware, wrapLanguageModel, type LanguageModelV1 } from 'ai'
 
 export const useAiModel = () => {
   const { config, aiApiBase } = useConfigStore()

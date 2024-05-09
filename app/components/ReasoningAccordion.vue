@@ -33,20 +33,13 @@ until modelValue's length > 0 -->
     :loading="loading"
   >
     <template #leading="{ item }">
-      <div
-        :class="[
-          loading && 'animate-pulse',
-          'flex items-center gap-2 text-(--ui-primary)',
-        ]"
-      >
+      <div :class="[loading && 'animate-pulse', 'flex items-center gap-2 text-(--ui-primary)']">
         <UIcon :name="item.icon" size="20" />
         {{ loading ? $t('modelThinking') : $t('modelThinkingComplete') }}
       </div>
     </template>
     <template #content="{ item }">
-      <p
-        class="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-wrap mb-4"
-      >
+      <p class="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-wrap mb-4">
         {{ item.content }}
       </p>
     </template>

@@ -10,8 +10,8 @@
     "generate:optimize": "node scripts/build.js --generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "format": "prettier --write app server utils lib",
-    "lint": "prettier --check app server utils lib"
+    "format": "prettier --write app server lib shared",
+    "lint": "prettier --check app server lib shared"
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^0.1.16",

@@ -4,7 +4,7 @@ import type { ConfigAi } from '~~/shared/types/config'
 export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig()
   const body = await readBody(event)
-  
+
   const { query, language, numQuestions = 3 } = body
 
   // Validate required parameters
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
           const data = `data: ${JSON.stringify(chunk)}\n\n`
           controller.enqueue(encoder.encode(data))
         }
-        
+
         controller.close()
       } catch (error: any) {
         const errorData = `data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`

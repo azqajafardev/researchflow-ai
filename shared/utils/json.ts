@@ -2,11 +2,7 @@ import { parsePartialJson } from '@ai-sdk/ui-utils'
 import type { TextStreamPart } from 'ai'
 import { z } from 'zod'
 
-export type DeepPartial<T> = T extends object
-  ? T extends Array<any>
-    ? T
-    : { [P in keyof T]?: DeepPartial<T[P]> }
-  : T
+export type DeepPartial<T> = T extends object ? (T extends Array<any> ? T : { [P in keyof T]?: DeepPartial<T[P]> }) : T
 
 export type ParseStreamingJsonEvent<T> =
   | { type: 'object'; value: DeepPartial<T> }
@@ -52,10 +48,7 @@ export async function* parseStreamingJson<T extends z.ZodType>(
     if (chunk.type === 'error') {
       yield {
         type: 'error',
-        message:
-          chunk.error instanceof Error
-            ? chunk.error.message
-            : String(chunk.error),
+        message: chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
       }
       continue
     }
@@ -63,8 +56,7 @@ export async function* parseStreamingJson<T extends z.ZodType>(
       rawText += chunk.textDelta
       const parsed = parsePartialJson(removeJsonMarkdown(rawText))
 
-      isParseSuccessful =
-        parsed.state === 'repaired-parse' || parsed.state === 'successful-parse'
+      isParseSuccessful = parsed.state === 'repaired-parse' || parsed.state === 'successful-parse'
       if (isParseSuccessful && isValid(parsed.value as any)) {
         yield {
           type: 'object',
@@ -76,9 +68,7 @@ export async function* parseStreamingJson<T extends z.ZodType>(
 
   // If the last chunk parses failed, return an error
   if (!isParseSuccessful) {
-    console.warn(
-      `[parseStreamingJson] Failed to parse JSON: ${removeJsonMarkdown(rawText)}`,
-    )
+    console.warn(`[parseStreamingJson] Failed to parse JSON: ${removeJsonMarkdown(rawText)}`)
     yield {
       type: 'bad-end',
       rawText,

@@ -10,9 +10,7 @@
                 <span v-if="isServerMode" class="text-xs text-green-600 dark:text-green-400">
                   {{ $t('serverMode.title') }}
                 </span>
-                <span class="text-xs text-gray-400 dark:text-gray-500">
-                  v{{ version }}
-                </span>
+                <span class="text-xs text-gray-400 dark:text-gray-500"> v{{ version }} </span>
               </div>
             </h1>
           </div>
@@ -25,26 +23,13 @@
           </div>
         </div>
 
-        <i18n-t
-          class="whitespace-pre-wrap"
-          keypath="index.projectDescription"
-          tag="p"
-        >
-          <UButton
-            class="!p-0"
-            variant="link"
-            href="https://github.com/dzhng/deep-research"
-            target="_blank"
-          >
+        <i18n-t class="whitespace-pre-wrap" keypath="index.projectDescription" tag="p">
+          <UButton class="!p-0" variant="link" href="https://github.com/dzhng/deep-research" target="_blank">
             dzhng/deep-research
           </UButton>
         </i18n-t>
 
-        <ResearchForm
-          :is-loading-feedback="!!feedbackRef?.isLoading"
-          ref="formRef"
-          @submit="generateFeedback"
-        />
+        <ResearchForm :is-loading-feedback="!!feedbackRef?.isLoading" ref="formRef" @submit="generateFeedback" />
         <ResearchFeedback
           :is-loading-search="!!deepResearchRef?.isLoading"
           ref="feedbackRef"
@@ -69,11 +54,7 @@
   import type { ResearchResult } from '~~/lib/core/deep-research'
   import type { ResearchHistoryItem } from '~/types/history'
   import { useHistory } from '~/composables/useHistory'
-  import {
-    feedbackInjectionKey,
-    formInjectionKey,
-    researchResultInjectionKey,
-  } from '@/constants/injection-keys'
+  import { feedbackInjectionKey, formInjectionKey, researchResultInjectionKey } from '@/constants/injection-keys'
 
   const runtimeConfig = useRuntimeConfig()
   const version = runtimeConfig.public.version
@@ -124,10 +105,10 @@
         numQuestions: form.value.numQuestions,
         feedback: [...feedback.value],
         learnings: [...researchResult.value.learnings],
-        report: '' // 初始为空，将在报告生成后通过 complete 事件更新
+        report: '', // 初始为空，将在报告生成后通过 complete 事件更新
       })
     }
-    
+
     // 触发报告生成
     await generateReport()
   }
@@ -140,7 +121,7 @@
       updateHistoryItem(existingItem.id, {
         report,
         learnings: [...researchResult.value.learnings],
-        feedback: [...feedback.value]
+        feedback: [...feedback.value],
       })
     }
   }
@@ -151,14 +132,14 @@
       query: item.query,
       breadth: item.breadth,
       depth: item.depth,
-      numQuestions: item.numQuestions
+      numQuestions: item.numQuestions,
     }
-    
+
     feedback.value = [...item.feedback]
     researchResult.value = {
-      learnings: [...item.learnings]
+      learnings: [...item.learnings],
     }
-    
+
     // 如果历史记录中有报告，直接显示，不重新生成
     if (item.report && reportRef.value) {
       nextTick(() => {

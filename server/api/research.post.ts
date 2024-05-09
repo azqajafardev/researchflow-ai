@@ -37,10 +37,7 @@ class ApiKeyPool {
     const envKeySet = new Set(keys)
     const stateKeySet = new Set(this.state.keys.map((k) => k.key))
 
-    if (
-      this.state.keys.length !== keys.length ||
-      ![...envKeySet].every((k) => stateKeySet.has(k))
-    ) {
+    if (this.state.keys.length !== keys.length || ![...envKeySet].every((k) => stateKeySet.has(k))) {
       this.state = {
         currentIndex: 0,
         keys: keys.map((key) => ({
@@ -73,10 +70,7 @@ class ApiKeyPool {
     try {
       fs.writeFileSync(this.cacheFilePath, JSON.stringify(this.state, null, 2))
     } catch (error: any) {
-      console.error(
-        `[ApiKeyPool] Error: Could not write to cache file for ${this.cacheFilePath}.`,
-        error.message,
-      )
+      console.error(`[ApiKeyPool] Error: Could not write to cache file for ${this.cacheFilePath}.`, error.message)
     }
   }
 
@@ -100,9 +94,7 @@ class ApiKeyPool {
       keyConfig.errorCount++
       if (keyConfig.errorCount >= keyConfig.maxErrors) {
         keyConfig.active = false
-        console.error(
-          `[ApiKeyPool] Disabling key due to multiple errors: ${key.substring(0, 8)}...`,
-        )
+        console.error(`[ApiKeyPool] Disabling key due to multiple errors: ${key.substring(0, 8)}...`)
       }
       this.saveState()
     }
@@ -209,10 +201,7 @@ async function createServerWebSearch(runtimeConfig: RuntimeConfig) {
   const { tavily } = await import('@tavily/core')
   const { default: Firecrawl } = await import('@mendable/firecrawl-js')
 
-  return async (
-    query: string,
-    options: { maxResults?: number; lang?: string },
-  ) => {
+  return async (query: string, options: { maxResults?: number; lang?: string }) => {
     const provider = runtimeConfig.public.webSearchProvider
     const apiKey = runtimeConfig.webSearchApiKey
     const apiBase = runtimeConfig.webSearchApiBase
@@ -244,26 +233,20 @@ async function createServerWebSearch(runtimeConfig: RuntimeConfig) {
       case 'google-pse': {
         const pseId = runtimeConfig.public.googlePseId
         if (!pseId) {
-          throw new Error(
-            'NUXT_PUBLIC_GOOGLE_PSE_ID environment variable not set.',
-          )
+          throw new Error('NUXT_PUBLIC_GOOGLE_PSE_ID environment variable not set.')
         }
 
         if (!googleApiKeyPool) {
           const apiKeysEnv = runtimeConfig.webSearchApiKey
           if (!apiKeysEnv) {
-            throw new Error(
-              'NUXT_WEB_SEARCH_API_KEY environment variable not set for Google PSE.',
-            )
+            throw new Error('NUXT_WEB_SEARCH_API_KEY environment variable not set for Google PSE.')
           }
           const keys = apiKeysEnv
             .split(',')
             .map((key: string) => key.trim())
             .filter((key: string) => key)
           if (keys.length === 0) {
-            throw new Error(
-              'NUXT_WEB_SEARCH_API_KEY environment variable is empty or contains only commas.',
-            )
+            throw new Error('NUXT_WEB_SEARCH_API_KEY environment variable is empty or contains only commas.')
           }
           googleApiKeyPool = new ApiKeyPool(keys, 'google-pse')
         }
@@ -310,18 +293,14 @@ async function createServerWebSearch(runtimeConfig: RuntimeConfig) {
         if (!apiKeyPool) {
           const apiKeysEnv = runtimeConfig.webSearchApiKey
           if (!apiKeysEnv) {
-            throw new Error(
-              'NUXT_WEB_SEARCH_API_KEY environment variable not set.',
-            )
+            throw new Error('NUXT_WEB_SEARCH_API_KEY environment variable not set.')
           }
           const keys = apiKeysEnv
             .split(',')
             .map((key: string) => key.trim())
             .filter((key: string) => key)
           if (keys.length === 0) {
-            throw new Error(
-              'NUXT_WEB_SEARCH_API_KEY environment variable is empty or contains only commas.',
-            )
+            throw new Error('NUXT_WEB_SEARCH_API_KEY environment variable is empty or contains only commas.')
           }
           apiKeyPool = new ApiKeyPool(keys, 'tavily')
         }
@@ -338,11 +317,8 @@ async function createServerWebSearch(runtimeConfig: RuntimeConfig) {
           })
           const results = await tvly.search(query, {
             maxResults: options.maxResults || 5,
-            searchDepth: runtimeConfig.public.tavilyAdvancedSearch
-              ? 'advanced'
-              : 'basic',
-            topic: runtimeConfig.public
-              .tavilySearchTopic as ConfigWebSearch['tavilySearchTopic'],
+            searchDepth: runtimeConfig.public.tavilyAdvancedSearch ? 'advanced' : 'basic',
+            topic: runtimeConfig.public.tavilySearchTopic as ConfigWebSearch['tavilySearchTopic'],
           })
           apiKeyPool.markKeySuccess(currentApiKey)
           return results.results

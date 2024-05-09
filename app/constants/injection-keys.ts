@@ -3,9 +3,5 @@ import type { ResearchInputData } from '~/components/ResearchForm.vue'
 import type { ResearchResult } from '~~/lib/core/deep-research'
 
 export const formInjectionKey = Symbol() as InjectionKey<Ref<ResearchInputData>>
-export const feedbackInjectionKey = Symbol() as InjectionKey<
-  Ref<ResearchFeedbackResult[]>
->
-export const researchResultInjectionKey = Symbol() as InjectionKey<
-  Ref<ResearchResult>
->
+export const feedbackInjectionKey = Symbol() as InjectionKey<Ref<ResearchFeedbackResult[]>>
+export const researchResultInjectionKey = Symbol() as InjectionKey<Ref<ResearchResult>>

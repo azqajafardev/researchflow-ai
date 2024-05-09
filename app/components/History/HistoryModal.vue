@@ -4,21 +4,12 @@
 
   const { t } = useI18n()
   const toast = useToast()
-  const {
-    history,
-    removeHistoryItem,
-    exportHistoryItem,
-    importHistoryItem,
-    clearHistory,
-  } = useHistory()
+  const { history, removeHistoryItem, exportHistoryItem, importHistoryItem, clearHistory } = useHistory()
   const showModal = ref(false)
   const loading = ref(false)
 
   const sortedHistory = computed(() =>
-    [...history.value.items].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    ),
+    [...history.value.items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
   )
 
   const fileInput = ref<HTMLInputElement>()
@@ -117,33 +108,16 @@
 
 <template>
   <UModal v-model:open="showModal" :title="t('history.title')" size="xl">
-    <UButton
-      color="primary"
-      variant="subtle"
-      icon="i-lucide-history"
-      @click="showModal = true"
-    />
+    <UButton color="primary" variant="subtle" icon="i-lucide-history" @click="showModal = true" />
     <template #body>
       <div class="flex flex-col gap-4">
         <!-- 导入按钮和删除全部 -->
         <div class="flex gap-2 justify-between items-center">
           <div class="flex gap-2">
-            <UButton
-              color="info"
-              variant="soft"
-              icon="i-lucide-upload"
-              @click="handleImport"
-              :loading="loading"
-            >
+            <UButton color="info" variant="soft" icon="i-lucide-upload" @click="handleImport" :loading="loading">
               {{ t('history.import') }}
             </UButton>
-            <input
-              ref="fileInput"
-              type="file"
-              accept=".json"
-              class="hidden"
-              @change="handleFileSelect"
-            />
+            <input ref="fileInput" type="file" accept=".json" class="hidden" @change="handleFileSelect" />
           </div>
 
           <UButton
@@ -158,10 +132,7 @@
         </div>
 
         <!-- 历史记录列表 -->
-        <div
-          v-if="sortedHistory.length > 0"
-          class="space-y-2 max-h-96 overflow-y-auto"
-        >
+        <div v-if="sortedHistory.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
           <div
             v-for="item in sortedHistory"
             :key="item.id"
@@ -173,14 +144,10 @@
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   {{ truncateText(item.query) }}
                 </p>
-                <div
-                  class="flex gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2"
-                >
+                <div class="flex gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>{{ t('history.depth') }}: {{ item.depth }}</span>
                   <span>{{ t('history.breadth') }}: {{ item.breadth }}</span>
-                  <span
-                    >{{ t('history.questions') }}: {{ item.numQuestions }}</span
-                  >
+                  <span>{{ t('history.questions') }}: {{ item.numQuestions }}</span>
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ formatDate(item.createdAt) }}

@@ -19,11 +19,7 @@
   const form = inject(formInjectionKey)!
 
   const isSubmitButtonDisabled = computed(
-    () =>
-      !form.value.query ||
-      !form.value.breadth ||
-      !form.value.depth ||
-      !form.value.numQuestions,
+    () => !form.value.query || !form.value.breadth || !form.value.depth || !form.value.numQuestions,
   )
 
   function handleSubmit() {
@@ -52,38 +48,17 @@
           <template #help>
             {{ $t('researchTopic.numOfQuestionsHelp') }}
           </template>
-          <UInput
-            v-model="form.numQuestions"
-            class="w-full"
-            type="number"
-            :min="1"
-            :max="5"
-            :step="1"
-          />
+          <UInput v-model="form.numQuestions" class="w-full" type="number" :min="1" :max="5" :step="1" />
         </UFormField>
 
         <UFormField :label="$t('researchTopic.depth')" required>
           <template #help>{{ $t('researchTopic.depthHelp') }}</template>
-          <UInput
-            v-model="form.depth"
-            class="w-full"
-            type="number"
-            :min="1"
-            :max="8"
-            :step="1"
-          />
+          <UInput v-model="form.depth" class="w-full" type="number" :min="1" :max="8" :step="1" />
         </UFormField>
 
         <UFormField :label="$t('researchTopic.breadth')" required>
           <template #help>{{ $t('researchTopic.breadthHelp') }}</template>
-          <UInput
-            v-model="form.breadth"
-            class="w-full"
-            type="number"
-            :min="1"
-            :max="8"
-            :step="1"
-          />
+          <UInput v-model="form.breadth" class="w-full" type="number" :min="1" :max="8" :step="1" />
         </UFormField>
       </div>
     </div>
@@ -97,11 +72,7 @@
         block
         @click="handleSubmit"
       >
-        {{
-          isLoadingFeedback
-            ? $t('researchTopic.researching')
-            : $t('researchTopic.start')
-        }}
+        {{ isLoadingFeedback ? $t('researchTopic.researching') : $t('researchTopic.start') }}
       </UButton>
     </template>
   </UCard>

@@ -59,10 +59,7 @@ which is longer than the specified ${this.chunkSize}`,
           // Keep on popping if:
           // - we have a larger chunk than in the chunk overlap
           // - or if we still have any chunks and the length is long
-          while (
-            total > this.chunkOverlap ||
-            (total + _len > this.chunkSize && total > 0)
-          ) {
+          while (total > this.chunkOverlap || (total + _len > this.chunkSize && total > 0)) {
             total -= currentDoc[0]!.length
             currentDoc.shift()
           }
@@ -79,15 +76,11 @@ which is longer than the specified ${this.chunkSize}`,
   }
 }
 
-export interface RecursiveCharacterTextSplitterParams
-  extends TextSplitterParams {
+export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams {
   separators: string[]
 }
 
-export class RecursiveCharacterTextSplitter
-  extends TextSplitter
-  implements RecursiveCharacterTextSplitterParams
-{
+export class RecursiveCharacterTextSplitter extends TextSplitter implements RecursiveCharacterTextSplitterParams {
   separators: string[] = ['\n\n', '\n', '.', ',', '>', '<', ' ', '']
 
   constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {

@@ -5,11 +5,7 @@
     type ProcessedSearchResult,
     type ResearchStep,
   } from '~~/lib/core/deep-research'
-  import {
-    feedbackInjectionKey,
-    formInjectionKey,
-    researchResultInjectionKey,
-  } from '~/constants/injection-keys'
+  import { feedbackInjectionKey, formInjectionKey, researchResultInjectionKey } from '~/constants/injection-keys'
   import Flow, { type SearchNode, type SearchEdge } from './SearchFlow.vue'
   import SearchFlow from './SearchFlow.vue'
   import NodeDetail from './NodeDetail.vue'
@@ -95,8 +91,7 @@
     switch (step.type) {
       case 'generating_query_reasoning': {
         if (node) {
-          node.generateQueriesReasoning =
-            (node.generateQueriesReasoning ?? '') + step.delta
+          node.generateQueriesReasoning = (node.generateQueriesReasoning ?? '') + step.delta
         }
         break
       }
@@ -154,8 +149,7 @@
 
       case 'processing_serach_result_reasoning': {
         if (node) {
-          node.generateLearningsReasoning =
-            (node.generateLearningsReasoning ?? '') + step.delta
+          node.generateLearningsReasoning = (node.generateLearningsReasoning ?? '') + step.delta
         }
         break
       }
@@ -168,10 +162,7 @@
       }
 
       case 'node_complete': {
-        console.log(
-          `[DeepResearch] node ${nodeId} processed_search_result:`,
-          step,
-        )
+        console.log(`[DeepResearch] node ${nodeId} processed_search_result:`, step)
         if (node && step.result) {
           node.learnings = step.result.learnings
           searchResults.value[nodeId] = step.result
@@ -180,11 +171,7 @@
       }
 
       case 'error':
-        console.error(
-          `[DeepResearch] node ${nodeId} error:`,
-          node,
-          step.message,
-        )
+        console.error(`[DeepResearch] node ${nodeId} error:`, node, step.message)
         node!.error = step.message
         toast.add({
           title: t('webBrowsing.nodeFailedToast', {
@@ -261,12 +248,8 @@
           breadth = searchBreadth(breadth, parentId)
         }
         // Collect all parent nodes' learnings and visitedUrls
-        const parentNodes = nodes.value.filter((n) =>
-          isParentNode(n.id, retryNode.id),
-        )
-        existingLearnings = parentNodes
-          .flatMap((n) => n.learnings || [])
-          .filter(Boolean)
+        const parentNodes = nodes.value.filter((n) => isParentNode(n.id, retryNode.id))
+        existingLearnings = parentNodes.flatMap((n) => n.learnings || []).filter(Boolean)
       }
 
       await researchFunction({
@@ -356,12 +339,7 @@
           </p>
         </div>
         <UTooltip :text="t('exitFullscreen')" :delay-duration="100">
-          <UButton
-            icon="i-material-symbols:fullscreen-exit"
-            variant="ghost"
-            color="info"
-            @click="toggleFullscreen"
-          />
+          <UButton icon="i-material-symbols:fullscreen-exit" variant="ghost" color="info" @click="toggleFullscreen" />
         </UTooltip>
       </div>
     </template>
@@ -403,12 +381,7 @@
           </p>
         </div>
         <UTooltip :text="t('fullscreen')" :delay-duration="100">
-          <UButton
-            icon="i-material-symbols:fullscreen"
-            variant="ghost"
-            color="info"
-            @click="toggleFullscreen"
-          />
+          <UButton icon="i-material-symbols:fullscreen" variant="ghost" color="info" @click="toggleFullscreen" />
         </UTooltip>
       </div>
     </template>

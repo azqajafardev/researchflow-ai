@@ -7,10 +7,7 @@ type WebSearchOptions = {
   lang?: string
 }
 
-type WebSearchFunction = (
-  query: string,
-  options: WebSearchOptions,
-) => Promise<WebSearchResult[]>
+type WebSearchFunction = (query: string, options: WebSearchOptions) => Promise<WebSearchResult[]>
 
 export const useWebSearch = (): WebSearchFunction => {
   const { config, webSearchApiBase } = useConfigStore()
@@ -56,18 +53,22 @@ export const useWebSearch = (): WebSearchFunction => {
           cx: pseId,
           q: q,
           num: o.maxResults?.toString() || '5',
-        });
+        })
         if (o.lang) {
-          searchParams.append('lr', `lang_${o.lang}`);
+          searchParams.append('lr', `lang_${o.lang}`)
         }
 
-        const apiUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`;
+        const apiUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`
 
         try {
-          const response = await $fetch<{ items?: Array<{ title: string; link: string; snippet: string }> }>(apiUrl, { method: 'GET' });
+          const response = await $fetch<{
+            items?: Array<{ title: string; link: string; snippet: string }>
+          }>(apiUrl, {
+            method: 'GET',
+          })
 
           if (!response.items) {
-            return [];
+            return []
           }
 
           // Map response to WebSearchResult format
@@ -75,12 +76,12 @@ export const useWebSearch = (): WebSearchFunction => {
             content: item.snippet, // Use snippet as content
             url: item.link,
             title: item.title,
-          }));
+          }))
         } catch (error: any) {
-          console.error('Google PSE search failed:', error);
+          console.error('Google PSE search failed:', error)
           // Attempt to parse Google API error format
-          const errorMessage = error?.data?.error?.message || error.message || 'Unknown error';
-          throw new Error(`Google PSE Error: ${errorMessage}`);
+          const errorMessage = error?.data?.error?.message || error.message || 'Unknown error'
+          throw new Error(`Google PSE Error: ${errorMessage}`)
         }
       }
     }
@@ -92,9 +93,7 @@ export const useWebSearch = (): WebSearchFunction => {
       return async (q: string, o: WebSearchOptions) => {
         const results = await tvly.search(q, {
           ...o,
-          searchDepth: config.webSearch.tavilyAdvancedSearch
-            ? 'advanced'
-            : 'basic',
+          searchDepth: config.webSearch.tavilyAdvancedSearch ? 'advanced' : 'basic',
           topic: config.webSearch.tavilySearchTopic,
         })
         return results.results

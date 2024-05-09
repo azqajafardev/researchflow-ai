@@ -9,7 +9,7 @@ async function* parseSSEStream(response: Response) {
 
   const decoder = new TextDecoder()
   let buffer = ''
-  
+
   while (true) {
     const { done, value } = await reader.read()
     if (done) {
@@ -20,7 +20,7 @@ async function* parseSSEStream(response: Response) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6)
             if (data === '[DONE]') return
-            
+
             try {
               const step = JSON.parse(data)
               yield step
@@ -32,20 +32,20 @@ async function* parseSSEStream(response: Response) {
       }
       break
     }
-    
+
     buffer += decoder.decode(value, { stream: true })
-    
+
     // 检查是否有完整的 SSE 消息
     const lines = buffer.split('\n\n')
-    
+
     // 保留最后一个不完整的部分
     buffer = lines.pop() || ''
-    
+
     for (const line of lines) {
       if (line.startsWith('data: ')) {
         const data = line.slice(6)
         if (data === '[DONE]') return
-        
+
         try {
           const step = JSON.parse(data)
           yield step
@@ -74,8 +74,19 @@ export function useServerMode() {
     retryNode?: any
     onProgress: (step: ResearchStep) => void
   }) => {
-    const { query, breadth, maxDepth, languageCode, searchLanguageCode, learnings, currentDepth, nodeId, retryNode, onProgress } = params
-    
+    const {
+      query,
+      breadth,
+      maxDepth,
+      languageCode,
+      searchLanguageCode,
+      learnings,
+      currentDepth,
+      nodeId,
+      retryNode,
+      onProgress,
+    } = params
+
     const response = await fetch('/api/research', {
       method: 'POST',
       headers: {
@@ -106,7 +117,7 @@ export function useServerMode() {
     aiConfig: ConfigAi
   }) {
     const { query, language, numQuestions } = params
-    
+
     const response = await fetch('/api/feedback', {
       method: 'POST',
       headers: {
@@ -131,7 +142,7 @@ export function useServerMode() {
     aiConfig: ConfigAi
   }) => {
     const { prompt, learnings, language } = params
-    
+
     const response = await fetch('/api/report', {
       method: 'POST',
       headers: {
@@ -145,7 +156,7 @@ export function useServerMode() {
     })
 
     return {
-      fullStream: parseSSEStream(response)
+      fullStream: parseSSEStream(response),
     }
   }
 
@@ -165,11 +176,12 @@ export function useServerMode() {
           nodeId?: string
           retryNode?: any
           onProgress: (step: ResearchStep) => void
-        }) => clientDeepResearch({
-          ...params,
-          webSearchFunction: useWebSearch(),
-          pLimitInstance: usePLimit()
-        }),
+        }) =>
+          clientDeepResearch({
+            ...params,
+            webSearchFunction: useWebSearch(),
+            pLimitInstance: usePLimit(),
+          }),
     generateFeedback: isServerMode.value ? serverGenerateFeedback : clientGenerateFeedback,
     writeFinalReport: isServerMode.value ? serverWriteFinalReport : clientWriteFinalReport,
   }

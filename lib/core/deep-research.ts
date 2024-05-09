@@ -26,36 +26,36 @@ export type PartialProcessedSearchResult = DeepPartial<ProcessedSearchResult>
 
 export type ResearchStep =
   | {
-    type: 'generating_query'
-    result: PartialSearchQuery
-    nodeId: string
-    parentNodeId?: string
-  }
+      type: 'generating_query'
+      result: PartialSearchQuery
+      nodeId: string
+      parentNodeId?: string
+    }
   | { type: 'generating_query_reasoning'; delta: string; nodeId: string }
   | {
-    type: 'generated_query'
-    query: string
-    result: PartialSearchQuery
-    nodeId: string
-  }
+      type: 'generated_query'
+      query: string
+      result: PartialSearchQuery
+      nodeId: string
+    }
   | { type: 'searching'; query: string; nodeId: string }
   | { type: 'search_complete'; results: WebSearchResult[]; nodeId: string }
   | {
-    type: 'processing_serach_result'
-    query: string
-    result: PartialProcessedSearchResult
-    nodeId: string
-  }
+      type: 'processing_serach_result'
+      query: string
+      result: PartialProcessedSearchResult
+      nodeId: string
+    }
   | {
-    type: 'processing_serach_result_reasoning'
-    delta: string
-    nodeId: string
-  }
+      type: 'processing_serach_result_reasoning'
+      delta: string
+      nodeId: string
+    }
   | {
-    type: 'node_complete'
-    result?: ProcessedSearchResult
-    nodeId: string
-  }
+      type: 'node_complete'
+      result?: ProcessedSearchResult
+      nodeId: string
+    }
   | { type: 'error'; message: string; nodeId: string }
   | { type: 'complete'; learnings: ProcessedSearchResult['learnings'] }
 
@@ -115,8 +115,8 @@ export function generateSearchQueries({
     `Given the following prompt from the user, generate a list of highly effective Google search queries to research the topic. Return a maximum of ${numQueries} queries, but feel free to return less if the original prompt is clear. Make sure each query is creative, unique and not similar to each other: <prompt>${query}</prompt>`,
     learnings
       ? `Here are some learnings from previous research, use them to generate more specific queries: ${learnings.join(
-        '\n',
-      )}`
+          '\n',
+        )}`
       : '',
     `You MUST respond in JSON matching this JSON schema: ${jsonSchema}`,
     lp,
@@ -162,9 +162,7 @@ function processSearchResult({
     learnings: z
       .array(
         z.object({
-          url: z
-            .string()
-            .describe('The source URL from which this learning was extracted'),
+          url: z.string().describe('The source URL from which this learning was extracted'),
           learning: z
             .string()
             .describe(
@@ -186,10 +184,7 @@ function processSearchResult({
   const prompt = [
     `Given the following contents from a SERP search for the query <query>${query}</query>, extract ${numLearnings} key learnings from the contents. Make sure each learning is unique and not similar to each other. The learnings should be as detailed and information dense as possible. Include any entities like people, places, companies, products, things, etc in the learnings, as well as any exact metrics, numbers, or dates. Also generate up to ${numFollowUpQuestions} follow-up questions that could help explore this topic further.`,
     `<contents>${contents
-      .map(
-        (content, index) =>
-          `<content url="${results[index]!.url}">\n${content}\n</content>`,
-      )
+      .map((content, index) => `<content url="${results[index]!.url}">\n${content}\n</content>`)
       .join('\n')}</contents>`,
     `You MUST respond in JSON matching this JSON schema: ${jsonSchema}`,
     languagePrompt(language),
@@ -205,12 +200,7 @@ function processSearchResult({
   })
 }
 
-export function writeFinalReport({
-  prompt,
-  learnings,
-  language,
-  aiConfig,
-}: WriteFinalReportParams) {
+export function writeFinalReport({ prompt, learnings, language, aiConfig }: WriteFinalReportParams) {
   const learningsString = trimPrompt(
     learnings
       .map(
@@ -283,13 +273,13 @@ export async function deepResearch({
 }) {
   const language = languageCode
   const searchLanguage = searchLanguageCode
-  
+
   // Use provided pLimit or create a simple one if not provided
   const limit = pLimitInstance || {
-    async (fn: () => Promise<any>) {
+    async(fn: () => Promise<any>) {
       return fn()
     },
-    concurrency: 2
+    concurrency: 2,
   }
 
   try {
@@ -402,9 +392,7 @@ export async function deepResearch({
             if (!results.length) {
               throw new Error('No search results found')
             }
-            console.log(
-              `[DeepResearch] Searched "${searchQuery.query}", found ${results.length} contents`,
-            )
+            console.log(`[DeepResearch] Searched "${searchQuery.query}", found ${results.length} contents`)
 
             onProgress({
               type: 'search_complete',
@@ -458,10 +446,7 @@ export async function deepResearch({
                 break
               }
             }
-            console.log(
-              `Processed search result for ${searchQuery.query}`,
-              searchResult,
-            )
+            console.log(`Processed search result for ${searchQuery.query}`, searchResult)
             // Assign URL titles to learnings
             searchResult.learnings = searchResult.learnings?.map((learning) => {
               return {
@@ -469,10 +454,7 @@ export async function deepResearch({
                 title: results.find((r) => r.url === learning.url)?.title,
               }
             })
-            const allLearnings = [
-              ...(learnings ?? []),
-              ...(searchResult.learnings ?? []),
-            ]
+            const allLearnings = [...(learnings ?? []), ...(searchResult.learnings ?? [])]
             const nextDepth = currentDepth + 1
 
             onProgress({
@@ -484,19 +466,12 @@ export async function deepResearch({
               nodeId: searchQuery.nodeId,
             })
 
-            if (
-              nextDepth <= maxDepth &&
-              searchResult.followUpQuestions?.length
-            ) {
-              console.warn(
-                `Researching deeper, breadth: ${nextBreadth}, depth: ${nextDepth}`,
-              )
+            if (nextDepth <= maxDepth && searchResult.followUpQuestions?.length) {
+              console.warn(`Researching deeper, breadth: ${nextBreadth}, depth: ${nextDepth}`)
 
               const nextQuery = `
               Previous research goal: ${searchQuery.researchGoal}
-              Follow-up research directions: ${searchResult.followUpQuestions
-                  .map((q) => `\n${q}`)
-                  .join('')}
+              Follow-up research directions: ${searchResult.followUpQuestions.map((q) => `\n${q}`).join('')}
             `.trim()
 
               // Add concurrency by 1, and do next recursive search
@@ -527,10 +502,7 @@ export async function deepResearch({
               }
             }
           } catch (e: any) {
-            console.error(
-              `Error in node ${searchQuery.nodeId} for query ${searchQuery.query}`,
-              e,
-            )
+            console.error(`Error in node ${searchQuery.nodeId} for query ${searchQuery.query}`, e)
             onProgress({
               type: 'error',
               message: e.message,

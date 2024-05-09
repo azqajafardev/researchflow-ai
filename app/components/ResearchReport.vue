@@ -1,10 +1,6 @@
 <script setup lang="ts">
   import { marked } from 'marked'
-  import {
-    feedbackInjectionKey,
-    formInjectionKey,
-    researchResultInjectionKey,
-  } from '~/constants/injection-keys'
+  import { feedbackInjectionKey, formInjectionKey, researchResultInjectionKey } from '~/constants/injection-keys'
   import { useServerMode } from '~/composables/useServerMode'
 
   const { t, locale } = useI18n()
@@ -26,11 +22,7 @@
   const researchResult = inject(researchResultInjectionKey)!
 
   const isExportButtonDisabled = computed(
-    () =>
-      !reportContent.value ||
-      loading.value ||
-      loadingExportPdf.value ||
-      loadingExportMarkdown.value,
+    () => !reportContent.value || loading.value || loadingExportPdf.value || loadingExportMarkdown.value,
   )
 
   const reportHtml = computed(() => {
@@ -46,17 +38,14 @@
     // 替换引用标记 [数字] 为带有工具提示的 span
     html = html.replace(/\[(\d+)\]/g, (match, number) => {
       const index = parseInt(number) - 1
-      const learning =
-        index >= 0 && index < learnings.length ? learnings[index] : ''
+      const learning = index >= 0 && index < learnings.length ? learnings[index] : ''
       if (!learning) return match
       // 使用唯一的 ID 来标识每个 tooltip
       const tooltipId = `tooltip-${index}`
 
       return `<span class="citation-ref" data-tooltip-id="${tooltipId}" data-tooltip-url="${
         learning.url
-      }" data-tooltip-content="${encodeURIComponent(
-        learning.title || learning.url,
-      )}">
+      }" data-tooltip-content="${encodeURIComponent(learning.title || learning.url)}">
         <a href="${learning.url}" target="_blank">${match}</a>
       </span>`
     })
@@ -167,19 +156,12 @@
           reportContent.value += chunk.textDelta
         } else if (chunk.type === 'error') {
           error.value = t('researchReport.generateFailed', [
-            chunk.error instanceof Error
-              ? chunk.error.message
-              : String(chunk.error),
+            chunk.error instanceof Error ? chunk.error.message : String(chunk.error),
           ])
         }
       }
-      reportContent.value += `\n\n## ${t(
-        'researchReport.sources',
-      )}\n\n${learnings
-        .map(
-          (item, index) =>
-            `${index + 1}. [${item.title || item.url}](${item.url})`,
-        )
+      reportContent.value += `\n\n## ${t('researchReport.sources')}\n\n${learnings
+        .map((item, index) => `${index + 1}. [${item.title || item.url}](${item.url})`)
         .join('\n')}`
 
       // 触发完成事件
@@ -250,9 +232,7 @@
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `research-report-${
-        new Date().toISOString().split('T')[0]
-      }.md`
+      a.download = `research-report-${new Date().toISOString().split('T')[0]}.md`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -289,24 +269,13 @@
     <template #header>
       <div class="flex items-center justify-between gap-2">
         <h2 class="font-bold">{{ $t('researchReport.title') }}</h2>
-        <UButton
-          icon="i-lucide-refresh-cw"
-          :loading
-          variant="ghost"
-          @click="generateReport"
-        >
+        <UButton icon="i-lucide-refresh-cw" :loading variant="ghost" @click="generateReport">
           {{ $t('researchReport.regenerate') }}
         </UButton>
       </div>
     </template>
 
-    <UAlert
-      v-if="error"
-      :title="$t('researchReport.exportFailed')"
-      :description="error"
-      color="error"
-      variant="soft"
-    />
+    <UAlert v-if="error" :title="$t('researchReport.exportFailed')" :description="error" color="error" variant="soft" />
 
     <div class="flex mb-4 justify-end">
       <UButton
@@ -333,12 +302,7 @@
       </UButton>
     </div>
 
-    <ReasoningAccordion
-      v-if="reasoningContent"
-      v-model="reasoningContent"
-      class="mb-4"
-      :loading="loading"
-    />
+    <ReasoningAccordion v-if="reasoningContent" v-model="reasoningContent" class="mb-4" :loading="loading" />
 
     <div
       ref="reportContainerRef"
@@ -347,9 +311,7 @@
       v-html="reportHtml"
     />
     <div v-else>
-      {{
-        loading ? $t('researchReport.generating') : $t('researchReport.waiting')
-      }}
+      {{ loading ? $t('researchReport.generating') : $t('researchReport.waiting') }}
     </div>
   </UCard>
 </template>
