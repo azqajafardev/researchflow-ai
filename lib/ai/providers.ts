@@ -1,6 +1,6 @@
 import { getEncoding } from 'js-tiktoken'
 
-import { RecursiveCharacterTextSplitter } from './text-splitter'
+import { RecursiveCharacterTextSplitter } from '~~/lib/ai/text-splitter'
 
 const MinChunkSize = 140
 const encoder = getEncoding('o200k_base')

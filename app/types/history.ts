@@ -1,3 +1,4 @@
+import type { SearchPlan, SearchLimitation } from '~~/shared/utils/search-plan'
 import type { ResearchFeedbackResult, ResearchLearning } from '~~/shared/types/research-session'
 
 export type ResearchHistoryNodeStatus =
@@ -15,9 +16,12 @@ export interface ResearchHistoryGraphNode {
   id: string
   label: string
   researchGoal?: string
+  searchPlan?: SearchPlan
+  searchAttempt?: number
+  searchLimitations?: SearchLimitation[]
   generateQueriesReasoning?: string
   generateLearningsReasoning?: string
-  searchResults?: Array<{ url: string; title?: string }>
+  searchResults?: Array<{ url: string; title?: string; publishedAt?: string; score?: number }>
   learnings?: ResearchLearning[]
   status?: ResearchHistoryNodeStatus
   error?: string

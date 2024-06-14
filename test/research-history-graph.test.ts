@@ -131,3 +131,44 @@ describe('research history graph', () => {
     assert.equal(normalized.items[0]?.graph, undefined)
   })
 })
+
+it('round trips search plans, recovery state and source metadata without retaining page bodies', () => {
+  const searchPlan = {
+    query: 'AI product launches',
+    researchGoal: 'Discover AI products',
+    intent: 'news' as const,
+    timeRange: 'week' as const,
+    includeDomains: ['example.com'],
+  }
+  const graph = createResearchHistoryGraph([
+    {
+      id: '0-0',
+      label: searchPlan.query,
+      searchPlan,
+      searchAttempt: 2,
+      searchLimitations: ['language'],
+      searchResults: [
+        {
+          url: 'https://example.com',
+          publishedAt: '2026-09-06',
+          score: 0.8,
+          content: 'Do not persist me',
+        },
+      ],
+    },
+  ])
+  searchPlan.includeDomains.push('other.com')
+  const restored = restoreResearchHistoryGraph(
+    researchHistoryGraphSchema.parse(JSON.parse(JSON.stringify(graph))),
+  )
+  assert.deepEqual(restored.nodes[0]?.searchPlan?.includeDomains, ['example.com'])
+  assert.equal(restored.nodes[0]?.searchPlan?.timeRange, 'week')
+  assert.equal(restored.nodes[0]?.searchAttempt, 2)
+  assert.deepEqual(restored.nodes[0]?.searchLimitations, ['language'])
+  assert.deepEqual(restored.nodes[0]?.searchResults?.[0], {
+    url: 'https://example.com',
+    publishedAt: '2026-09-06',
+    score: 0.8,
+    content: '',
+  })
+})

@@ -219,5 +219,26 @@
     "failed": "Vervolgonderzoek kon niet worden voltooid. Het oorspronkelijke rapport is behouden. {message}",
     "cancelled": "Vervolgonderzoek gestopt. Het oorspronkelijke rapport is behouden.",
     "historyTitle": "{query} (vervolgonderzoek)"
+  },
+  "searchPlan": {
+    "intent": {
+      "general": "Zoeken op het web",
+      "news": "Nieuws zoeken"
+    },
+    "time": {
+      "day": "Afgelopen dag",
+      "week": "Afgelopen week",
+      "month": "Afgelopen maand",
+      "year": "Afgelopen jaar"
+    },
+    "rewritten": "Opnieuw gezocht met een aangepaste zoekopdracht",
+    "limited": "De zoekdienst heeft deze filters niet toegepast: {filters}. De broninhoud wordt gecontroleerd.",
+    "filters": {
+      "news": "nieuwstype",
+      "time": "datumbereik",
+      "domains": "brondomeinen",
+      "language": "zoektaal"
+    },
+    "published": "Brondatum: {date}"
   }
 }

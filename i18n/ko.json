@@ -223,5 +223,26 @@
     "failed": "추가 조사를 완료하지 못했습니다. 원본 보고서는 유지됩니다. {message}",
     "cancelled": "추가 조사가 중지되었습니다. 원본 보고서는 유지됩니다.",
     "historyTitle": "{query} (추가 조사)"
+  },
+  "searchPlan": {
+    "intent": {
+      "general": "웹 검색",
+      "news": "뉴스 검색"
+    },
+    "time": {
+      "day": "최근 하루",
+      "week": "최근 일주일",
+      "month": "최근 한 달",
+      "year": "최근 일 년"
+    },
+    "rewritten": "검색어를 수정하여 한 번 재검색함",
+    "limited": "검색 서비스가 적용하지 않은 필터: {filters}. 출처 내용을 확인합니다.",
+    "filters": {
+      "news": "뉴스 유형",
+      "time": "기간",
+      "domains": "출처 도메인",
+      "language": "검색 언어"
+    },
+    "published": "출처 표시 날짜: {date}"
   }
 }

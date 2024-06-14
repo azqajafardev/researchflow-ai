@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { SearchPlan, SearchLimitation } from '~~/shared/utils/search-plan'
   import {
     deepResearch,
     type PartialProcessedSearchResult,
@@ -33,6 +34,9 @@
     label: string
     /** The research goal of this node. Generated from parent node. */
     researchGoal?: string
+    searchPlan?: SearchPlan
+    searchAttempt?: number
+    searchLimitations?: SearchLimitation[]
     /** Reasoning content when generating queries for the next iteration. */
     generateQueriesReasoning?: string
     /** Reasoning content when generating learnings for this iteration. */
@@ -153,6 +157,13 @@
       }
 
       case 'searching': {
+        if (node) {
+          node.label = step.query
+          node.searchPlan = step.searchPlan
+          node.searchAttempt = step.attempt
+          node.learnings = []
+          flowRef.value?.updateNode(nodeId, { title: step.query })
+        }
         console.log(`[DeepResearch] node ${nodeId} searching:`, step)
         break
       }
@@ -161,6 +172,7 @@
         console.log(`[DeepResearch] node ${nodeId} search complete:`, step)
         if (node) {
           node.searchResults = step.results
+          node.searchLimitations = step.limitations
         }
         break
       }
@@ -190,6 +202,7 @@
 
       case 'error':
         console.error(`[DeepResearch] node ${nodeId} error:`, node, step.message)
+        if (node) node.learnings = []
         node!.error = step.message
         toast.add({
           title: t('webBrowsing.nodeFailedToast', {

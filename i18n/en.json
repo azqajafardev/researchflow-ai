@@ -223,5 +223,26 @@
     "failed": "Follow-up could not finish. The original report was kept. {message}",
     "cancelled": "Follow-up stopped. The original report was kept.",
     "historyTitle": "{query} (follow-up)"
+  },
+  "searchPlan": {
+    "intent": {
+      "general": "Web search",
+      "news": "News search"
+    },
+    "time": {
+      "day": "Past day",
+      "week": "Past week",
+      "month": "Past month",
+      "year": "Past year"
+    },
+    "rewritten": "Retried with a revised query",
+    "limited": "The search provider did not apply these filters: {filters}. Source contents will be checked.",
+    "filters": {
+      "news": "news type",
+      "time": "date range",
+      "domains": "source domains",
+      "language": "search language"
+    },
+    "published": "Source date: {date}"
   }
 }

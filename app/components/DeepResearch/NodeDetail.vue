@@ -38,6 +38,31 @@
       {{ node.label ?? $t('webBrowsing.generating') }}
     </h2>
 
+    <div v-if="node.searchPlan" class="my-3 flex flex-wrap items-center gap-2 text-sm">
+      <UBadge variant="soft" color="neutral">{{
+        $t(`searchPlan.intent.${node.searchPlan.intent || 'general'}`)
+      }}</UBadge>
+      <UBadge v-if="node.searchPlan.timeRange" variant="soft" color="neutral">{{
+        $t(`searchPlan.time.${node.searchPlan.timeRange}`)
+      }}</UBadge>
+      <span v-if="node.searchPlan.startDate || node.searchPlan.endDate"
+        >{{ node.searchPlan.startDate || '…' }} — {{ node.searchPlan.endDate || '…' }}</span
+      >
+      <span v-if="node.searchPlan.includeDomains?.length" class="break-all">{{
+        node.searchPlan.includeDomains.join(', ')
+      }}</span>
+      <span v-if="node.searchAttempt === 2">{{ $t('searchPlan.rewritten') }}</span>
+    </div>
+    <p v-if="node.searchLimitations?.length" class="my-2 text-sm text-gray-600 dark:text-gray-300">
+      {{
+        $t('searchPlan.limited', {
+          filters: node.searchLimitations
+            .map((item) => $t(`searchPlan.filters.${item}`))
+            .join(', '),
+        })
+      }}
+    </p>
+
     <!-- Research goal -->
     <h3 class="text-lg font-semibold mt-2">
       {{ $t('webBrowsing.researchGoal') }}
@@ -73,6 +98,9 @@
           {{ item.title || item.url }}
         </UButton>
         <span v-else>{{ item.title || item.url }}</span>
+        <span v-if="item.publishedAt" class="ml-2 text-xs text-gray-600 dark:text-gray-300">{{
+          $t('searchPlan.published', { date: item.publishedAt })
+        }}</span>
       </li>
     </ul>
     <span v-else> - </span>

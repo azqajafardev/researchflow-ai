@@ -1,3 +1,8 @@
+import {
+  searchPlanSchema,
+  type SearchPlan,
+  type SearchLimitation,
+} from '~~/shared/utils/search-plan'
 import { researchLearningSchema } from '~~/shared/utils/research-learning'
 import { z } from 'zod'
 import { createFlowEdge, createFlowNode } from '~/utils/research-graph'
@@ -19,12 +24,17 @@ export const researchHistoryNodeStatusSchema = z.enum([
 const researchHistorySearchResultSchema = z.object({
   url: z.string(),
   title: z.string().optional(),
+  publishedAt: z.string().optional(),
+  score: z.number().optional(),
 })
 
 export const researchHistoryGraphNodeSchema = z.object({
   id: z.string().min(1),
   label: z.string(),
   researchGoal: z.string().optional(),
+  searchPlan: searchPlanSchema.optional(),
+  searchAttempt: z.number().int().min(1).max(2).optional(),
+  searchLimitations: z.array(z.enum(['news', 'time', 'domains', 'language'])).optional(),
   generateQueriesReasoning: z.string().optional(),
   generateLearningsReasoning: z.string().optional(),
   searchResults: z.array(researchHistorySearchResultSchema).optional(),
@@ -47,9 +57,18 @@ export function serializeResearchHistoryNode(node: {
   id: string
   label: string
   researchGoal?: string
+  searchPlan?: SearchPlan
+  searchAttempt?: number
+  searchLimitations?: SearchLimitation[]
   generateQueriesReasoning?: string
   generateLearningsReasoning?: string
-  searchResults?: Array<{ url: string; title?: string; content?: string }>
+  searchResults?: Array<{
+    url: string
+    title?: string
+    content?: string
+    publishedAt?: string
+    score?: number
+  }>
   learnings?: ResearchHistoryGraphNode['learnings']
   status?: ResearchHistoryGraphNode['status']
   error?: string
@@ -58,10 +77,27 @@ export function serializeResearchHistoryNode(node: {
     id: node.id,
     label: node.label,
     researchGoal: node.researchGoal,
+    ...(node.searchPlan
+      ? {
+          searchPlan: {
+            ...node.searchPlan,
+            ...(node.searchPlan.includeDomains
+              ? { includeDomains: [...node.searchPlan.includeDomains] }
+              : {}),
+          },
+        }
+      : {}),
+    ...(node.searchAttempt ? { searchAttempt: node.searchAttempt } : {}),
+    ...(node.searchLimitations?.length ? { searchLimitations: [...node.searchLimitations] } : {}),
     generateQueriesReasoning: node.generateQueriesReasoning,
     generateLearningsReasoning: node.generateLearningsReasoning,
     // Persist only URL metadata for visited pages to keep localStorage small.
-    searchResults: node.searchResults?.map(({ url, title }) => (title ? { url, title } : { url })),
+    searchResults: node.searchResults?.map(({ url, title, publishedAt, score }) => ({
+      url,
+      ...(title ? { title } : {}),
+      ...(publishedAt ? { publishedAt } : {}),
+      ...(score !== undefined ? { score } : {}),
+    })),
     learnings: node.learnings?.map((learning) => ({ ...learning })),
     status: node.status,
     error: node.error,
@@ -111,8 +147,7 @@ export function restoreResearchHistoryGraph(graph: ResearchHistoryGraph) {
     ...node,
     // History stores URL metadata only; runtime WebSearchResult requires content.
     searchResults: node.searchResults?.map((item) => ({
-      url: item.url,
-      title: item.title,
+      ...item,
       content: '',
     })),
     learnings: node.learnings?.map((learning) => ({ ...learning })),

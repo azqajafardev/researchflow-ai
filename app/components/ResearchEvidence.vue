@@ -135,9 +135,16 @@
         />
       </UFormField>
       <div class="mt-3 flex flex-wrap items-center gap-3">
-        <UButton type="submit" icon="i-lucide-search" :disabled="!canSubmit" :loading="pending">{{
-          pending ? t(`researchEvidence.${stage || 'searching'}`) : t('researchEvidence.submit')
-        }}</UButton>
+        <UButton
+          type="submit"
+          icon="i-lucide-search-check"
+          loading-icon="i-lucide-loader-circle"
+          :disabled="!canSubmit"
+          :loading="pending"
+          >{{
+            pending ? t(`researchEvidence.${stage || 'searching'}`) : t('researchEvidence.submit')
+          }}</UButton
+        >
         <UButton v-if="pending" color="neutral" variant="outline" @click="emit('cancel')">{{
           t('researchEvidence.cancel')
         }}</UButton>

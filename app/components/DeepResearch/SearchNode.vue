@@ -23,7 +23,7 @@
         result.pulse = true
         break
       case 'generated_query':
-        result.icon = 'i-lucide-circle-pause'
+        result.icon = 'i-lucide-clock-3'
         break
       case 'searching':
         result.icon = 'i-lucide-search'

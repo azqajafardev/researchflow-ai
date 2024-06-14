@@ -1,14 +1,25 @@
 import { tavily } from '@tavily/core'
-import Firecrawl, { type Document, type SearchResultWeb } from '@mendable/firecrawl-js'
+import Firecrawl, {
+  type Document,
+  type SearchResultWeb,
+  type SearchResultNews,
+} from '@mendable/firecrawl-js'
+import {
+  searchConstraintsSchema,
+  resolveSearchPlan,
+  type SearchConstraints,
+  type SearchLimitation,
+} from '~~/shared/utils/search-plan'
 import { abortable, isAbortError } from '~~/shared/utils/abort'
 import type { ConfigWebSearchProvider } from '~~/shared/types/config'
 import type { WebSearchResult } from '~~/shared/types/types'
 
-export type WebSearchOptions = {
+export type WebSearchOptions = SearchConstraints & {
   maxResults?: number
-  /** The search language, e.g. `en`. Only works for Firecrawl / Google PSE. */
+  /** Search language. Unsupported provider filters are reported through onNotice. */
   lang?: string
   signal?: AbortSignal
+  onNotice?: (limitations: SearchLimitation[]) => void
 }
 
 export type WebSearchFunction = (
@@ -42,20 +53,88 @@ export function resolveWebSearchApiBase(
   return undefined
 }
 
-function mapFirecrawlResults(
-  web: Array<Document | SearchResultWeb> | undefined,
+export function mapFirecrawlResults(
+  items: Array<Document | SearchResultWeb | SearchResultNews> | undefined,
 ): WebSearchResult[] {
-  // With `scrapeOptions`, web results are scraped `Document`s carrying
-  // `markdown` plus top-level `url`/`title` (and a `metadata` fallback).
-  return (web ?? [])
-    .map((r) => r as Document & SearchResultWeb)
-    .filter((r) => !!r.markdown && !!(r.url ?? r.metadata?.sourceURL))
-    .map((r) => ({
-      content: r.markdown!,
-      sourceType: 'page' as const,
-      url: (r.url ?? r.metadata?.sourceURL)!,
-      title: r.title ?? r.metadata?.title,
-    }))
+  return (items ?? []).flatMap((item) => {
+    const r = item as Document & SearchResultWeb & SearchResultNews
+    const url = r.url ?? r.metadata?.sourceURL
+    const content = r.markdown || r.snippet || r.description
+    if (!url || !content) return []
+    return [
+      {
+        content,
+        url,
+        title: r.title ?? r.metadata?.title,
+        sourceType: r.markdown ? ('page' as const) : ('search-result' as const),
+        publishedAt: r.date,
+      },
+    ]
+  })
+}
+
+/** Build only filters supported by the selected provider; never silently pretend parity. */
+export function buildSearchFilters(provider: ConfigWebSearchProvider, options: WebSearchOptions) {
+  const limits: SearchLimitation[] = []
+  const time = options.timeRange
+  const hasDates = !!(options.startDate || options.endDate)
+  const domains = options.includeDomains?.length ? options.includeDomains : undefined
+  const date = (value: string) => {
+    const [year, month, day] = value.split('-')
+    return `${month}/${day}/${year}`
+  }
+  const tbs = hasDates
+    ? `cdr:1${options.startDate ? `,cd_min:${date(options.startDate)}` : ''}${options.endDate ? `,cd_max:${date(options.endDate)}` : ''}`
+    : time
+      ? `qdr:${{ day: 'd', week: 'w', month: 'm', year: 'y' }[time]}`
+      : undefined
+  const google: Record<string, string> = {}
+  if (options.lang) google.lr = `lang_${options.lang === 'zh' ? 'zh-CN' : options.lang}`
+  if (time && !hasDates)
+    google.dateRestrict = { day: 'd1', week: 'w1', month: 'm1', year: 'y1' }[time]
+  if (hasDates) limits.push('time') // PSE has no equivalent publication-date interval filter.
+  if (domains?.length === 1) {
+    google.siteSearch = domains[0]!
+    google.siteSearchFilter = 'i'
+  } else if (domains) limits.push('domains')
+  if (options.intent === 'news') limits.push('news')
+  if (provider === 'google-pse') return { google, firecrawl: {}, tavily: {}, limitations: limits }
+  if (provider === 'crw')
+    return {
+      google: {},
+      firecrawl: {},
+      tavily: {},
+      limitations: [
+        ...(options.intent === 'news' ? ['news' as const] : []),
+        ...(time || hasDates ? ['time' as const] : []),
+        ...(domains ? ['domains' as const] : []),
+        ...(options.lang ? ['language' as const] : []),
+      ],
+    }
+  if (provider === 'firecrawl')
+    return {
+      google: {},
+      tavily: {},
+      firecrawl: {
+        sources: [options.intent === 'news' ? ('news' as const) : ('web' as const)],
+        tbs,
+        includeDomains: domains,
+      },
+      limitations: options.lang ? ['language' as const] : [],
+    }
+  return {
+    google: {},
+    firecrawl: {},
+    tavily: {
+      topic: options.intent,
+      timeRange: hasDates ? undefined : time,
+      start_date: options.startDate,
+      end_date: options.endDate,
+      includeDomains: domains,
+      language: options.lang,
+    },
+    limitations: [],
+  }
 }
 
 async function searchWithFirecrawlCompatible(
@@ -77,6 +156,7 @@ async function searchWithFirecrawlCompatible(
   // source (`web`/`news`/`images`); `maxResults` was renamed to `limit`.
   const results = await abortable(
     fc.search(query, {
+      ...buildSearchFilters(config.provider, options).firecrawl,
       limit: options.maxResults ?? 5,
       scrapeOptions: {
         formats: ['markdown'],
@@ -85,7 +165,7 @@ async function searchWithFirecrawlCompatible(
     options.signal,
   )
 
-  return mapFirecrawlResults(results.web)
+  return mapFirecrawlResults([...(results.web ?? []), ...(results.news ?? [])])
 }
 
 async function searchWithGooglePse(
@@ -106,8 +186,8 @@ async function searchWithGooglePse(
     q: query,
     num: (options.maxResults ?? 5).toString(),
   })
-  if (options.lang) {
-    searchParams.append('lr', `lang_${options.lang}`)
+  for (const [key, value] of Object.entries(buildSearchFilters('google-pse', options).google)) {
+    searchParams.set(key, value)
   }
 
   const apiUrl = `https://www.googleapis.com/customsearch/v1?${searchParams.toString()}`
@@ -153,7 +233,8 @@ async function searchWithTavily(
     tvly.search(query, {
       maxResults: options.maxResults ?? 5,
       searchDepth: config.tavilyAdvancedSearch ? 'advanced' : 'basic',
-      topic: config.tavilySearchTopic,
+      ...buildSearchFilters('tavily', options).tavily,
+      topic: options.intent ?? config.tavilySearchTopic,
     }),
     options.signal,
   )
@@ -164,6 +245,8 @@ async function searchWithTavily(
       sourceType: 'search-result' as const,
       url: r.url,
       title: r.title,
+      publishedAt: r.publishedDate,
+      score: r.score,
     }))
 }
 
@@ -173,6 +256,9 @@ export async function searchWeb(
   query: string,
   options: WebSearchOptions = {},
 ): Promise<WebSearchResult[]> {
+  const constraints = searchConstraintsSchema.parse(options)
+  options = { ...options, ...resolveSearchPlan({ ...constraints, query, researchGoal: '' }) }
+  options.onNotice?.(buildSearchFilters(config.provider, options).limitations)
   switch (config.provider) {
     case 'firecrawl':
     case 'crw':

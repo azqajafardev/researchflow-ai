@@ -1,3 +1,4 @@
+import type { SearchConstraints } from '~~/shared/utils/search-plan'
 import { deepResearch as clientDeepResearch } from '~~/lib/core/deep-research'
 import { generateFeedback as clientGenerateFeedback } from '~~/lib/core/feedback'
 import { writeFinalReport as clientWriteFinalReport } from '~~/lib/core/deep-research'
@@ -37,6 +38,7 @@ export function useServerMode() {
     maxDepth: number
     languageCode: Locale
     searchLanguageCode?: Locale
+    searchConstraints?: SearchConstraints
     learnings?: ResearchLearning[]
     currentDepth: number
     nodeId?: string
@@ -51,6 +53,7 @@ export function useServerMode() {
       maxDepth,
       languageCode,
       searchLanguageCode,
+      searchConstraints,
       learnings,
       currentDepth,
       nodeId,
@@ -71,6 +74,7 @@ export function useServerMode() {
         depth: maxDepth,
         languageCode,
         searchLanguageCode,
+        searchConstraints,
         learnings,
         currentDepth,
         nodeId,
@@ -145,6 +149,7 @@ export function useServerMode() {
           languageCode: Locale
           aiConfig: ConfigAi
           searchLanguageCode?: Locale
+          searchConstraints?: SearchConstraints
           learnings?: ResearchLearning[]
           currentDepth: number
           nodeId?: string

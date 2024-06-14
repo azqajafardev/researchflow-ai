@@ -223,5 +223,26 @@
     "failed": "补查未完成，原报告已保留。{message}",
     "cancelled": "补查已停止，原报告已保留。",
     "historyTitle": "{query}（补查）"
+  },
+  "searchPlan": {
+    "intent": {
+      "general": "网页搜索",
+      "news": "新闻搜索"
+    },
+    "time": {
+      "day": "近一天",
+      "week": "近一周",
+      "month": "近一月",
+      "year": "近一年"
+    },
+    "rewritten": "已改写重查一次",
+    "limited": "当前搜索服务未应用这些过滤条件：{filters}。将根据来源内容核查。",
+    "filters": {
+      "news": "新闻类型",
+      "time": "时间范围",
+      "domains": "来源域名",
+      "language": "检索语言"
+    },
+    "published": "来源标注日期：{date}"
   }
 }

@@ -7,5 +7,9 @@ export type WebSearchResult = {
   content: string
   url: string
   title?: string
+  /** Provider publication metadata; not necessarily the event date. */
+  publishedAt?: string
+  /** Provider-local relevance score; never compare across providers. */
+  score?: number
   sourceType?: 'page' | 'search-result'
 }

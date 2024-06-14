@@ -1,20 +1,30 @@
 import { deduplicateLearnings } from '~~/shared/utils/research-learning'
 import type { ReportRevision } from '~~/shared/utils/report-revision'
 import { streamText } from 'ai'
+import pLimit from 'p-limit'
 import { z } from 'zod'
 import { parseStreamingJson, type DeepPartial } from '~~/shared/utils/json'
 
-import { trimPrompt } from '../ai/providers'
+import { trimPrompt } from '~~/lib/ai/providers'
 import {
   languagePrompt,
   learningExtractorSystemPrompt,
   reportSystemPrompt,
   resolveResponseLanguage,
   searchPlannerSystemPrompt,
-} from '../prompt'
+} from '~~/lib/prompt'
 import zodToJsonSchema from 'zod-to-json-schema'
 import { throwAiError } from '~~/shared/utils/errors'
 import type { ResearchLearning, ResearchResult } from '~~/shared/types/research-session'
+import {
+  searchPlanSchema,
+  searchPlanningRules,
+  resolveSearchPlan,
+  type SearchConstraints,
+  type SearchPlan,
+  type SearchLimitation,
+} from '~~/shared/utils/search-plan'
+import type { WebSearchFunction } from '~~/lib/core/web-search'
 import { normalizeGeneratedSearchQueries } from '~~/shared/utils/search-query'
 import {
   escapePromptAttribute,
@@ -53,8 +63,13 @@ export type ResearchStep =
       result: PartialSearchQuery
       nodeId: string
     }
-  | { type: 'searching'; query: string; nodeId: string }
-  | { type: 'search_complete'; results: WebSearchResult[]; nodeId: string }
+  | { type: 'searching'; query: string; nodeId: string; searchPlan?: SearchPlan; attempt?: number }
+  | {
+      type: 'search_complete'
+      results: WebSearchResult[]
+      nodeId: string
+      limitations?: SearchLimitation[]
+    }
   | {
       type: 'processing_search_result'
       query: string
@@ -78,12 +93,7 @@ export type ResearchStep =
  * Schema for {@link generateSearchQueries} without dynamic descriptions
  */
 export const searchQueriesTypeSchema = z.object({
-  queries: z.array(
-    z.object({
-      query: z.string(),
-      researchGoal: z.string(),
-    }),
-  ),
+  queries: z.array(searchPlanSchema),
 })
 
 // take an user query, return a list of SERP queries
@@ -94,6 +104,7 @@ export function generateSearchQueries({
   learnings,
   language,
   searchLanguage,
+  searchConstraints,
   aiConfig,
   signal,
 }: {
@@ -106,26 +117,12 @@ export function generateSearchQueries({
   learnings?: string[]
   /** Force the LLM to generate serp queries in a certain language */
   searchLanguage?: string
+  searchConstraints?: SearchConstraints
   aiConfig: ConfigAi
   signal?: AbortSignal
 }) {
   throwIfAborted(signal)
-  const schema = z.object({
-    queries: z
-      .array(
-        z
-          .object({
-            query: z.string().describe('Concrete SERP query string.'),
-            researchGoal: z
-              .string()
-              .describe(
-                'What this query should uncover, and one specific next step after results arrive.',
-              ),
-          })
-          .required({ query: true, researchGoal: true }),
-      )
-      .describe(`SERP queries, maximum ${numQueries}`),
-  })
+  const schema = searchQueriesTypeSchema
   const jsonSchema = JSON.stringify(zodToJsonSchema(schema))
   let lp = languagePrompt(language)
 
@@ -145,7 +142,11 @@ export function generateSearchQueries({
       : `User research prompt:\n<prompt>${query}</prompt>`
 
   const prompt = [
-    `Generate up to ${numQueries} highly effective web search queries for the topic below. Return fewer when the focus is already narrow. Each query must be specific, mutually distinct, and useful for a search engine (concrete entities, time ranges, comparisons, or facets). Prefer precision over clever wording. Operators like site:, filetype:, or quoted phrases are allowed when helpful.`,
+    `Generate up to ${numQueries} distinct web search tasks. Return fewer when the focus is narrow.`,
+    searchPlanningRules,
+    searchConstraints
+      ? `Inherited search constraints (keep the time window): ${JSON.stringify(searchConstraints)}`
+      : '',
     focusBlock,
     learnings?.length
       ? `Learnings from previous research — use them to go deeper and avoid repeating the same angles:\n${learnings.map((item) => `- ${item}`).join('\n')}`
@@ -184,11 +185,14 @@ export const searchResultTypeSchema = z.object({
     }),
   ),
   followUpQuestions: z.array(z.string()),
+  relevantUrls: z.array(z.string()).optional(),
+  rewriteQuery: z.string().optional(),
 })
 
 function processSearchResult({
   query,
   researchGoal,
+  searchPlan,
   results,
   numLearnings = 5,
   numFollowUpQuestions = 3,
@@ -198,6 +202,7 @@ function processSearchResult({
 }: {
   query: string
   researchGoal?: string
+  searchPlan?: SearchPlan
   results: WebSearchResult[]
   language: string
   numLearnings?: number
@@ -225,6 +230,17 @@ function processSearchResult({
         }),
       )
       .describe(`Key learnings, up to ${numLearnings}`),
+    relevantUrls: z
+      .array(z.string())
+      .describe(
+        'Only URLs that address the query and research goal within the requested time window. Empty when none qualify.',
+      ),
+    rewriteQuery: z
+      .string()
+      .optional()
+      .describe(
+        'Only if results are insufficient: ONE simpler query preserving the goal, named entities, and language. No dates, Boolean operators, or source-type keyword piles. Omit if no useful rewrite.',
+      ),
     followUpQuestions: z
       .array(z.string())
       .describe(
@@ -238,7 +254,11 @@ function processSearchResult({
     researchGoal
       ? `Research goal for this query:\n<research_goal>${researchGoal}</research_goal>`
       : '',
+    searchPlan
+      ? `Search constraints: ${JSON.stringify(searchPlan)}. Provider filters may be unavailable: verify dates and source relevance in the text. Publication metadata is a hint, not proof of an event date. Unknown dates must not become claims of recent events. Prefer primary evidence when sourcePreference=primary; do not fabricate it.`
+      : '',
     `Rules:
+- First assess relevance to BOTH the query and research goal. Reject keyword coincidences, old events republished as news, and off-topic sources. Deduplicate the same event; extract no learnings from rejected URLs. If nothing qualifies, return empty learnings and relevantUrls.
 - Each learning must be grounded in the provided contents.
 - Each "url" MUST be copied exactly from this allow-list: ${JSON.stringify(allowedUrls)}
 - Never invent or rewrite URLs.
@@ -248,7 +268,7 @@ function processSearchResult({
     `<contents>${contents
       .map(
         (content, index) =>
-          `<content url="${escapePromptAttribute(results[index]!.url)}">\n${content}\n</content>`,
+          `<content url="${escapePromptAttribute(results[index]!.url)}" title="${escapePromptAttribute(results[index]!.title ?? '')}" published_at="${escapePromptAttribute(results[index]!.publishedAt ?? 'unknown')}">\n${content}\n</content>`,
       )
       .join('\n')}</contents>`,
     `You MUST respond in JSON matching this JSON schema: ${jsonSchema}`,
@@ -340,6 +360,7 @@ export async function deepResearch({
   languageCode,
   aiConfig,
   searchLanguageCode,
+  searchConstraints,
   learnings,
   onProgress,
   currentDepth,
@@ -360,6 +381,7 @@ export async function deepResearch({
   aiConfig: ConfigAi
   /** The language of SERP query */
   searchLanguageCode?: Locale
+  searchConstraints?: SearchConstraints
   /** Accumulated learnings from all nodes visited so far */
   learnings?: ResearchLearning[]
   currentDepth: number
@@ -368,10 +390,7 @@ export async function deepResearch({
   /** The Node ID to retry. Passed from DeepResearch.vue */
   retryNode?: any
   onProgress: (step: ResearchStep) => void
-  webSearchFunction: (
-    query: string,
-    options: { maxResults?: number; lang?: string; signal?: AbortSignal },
-  ) => Promise<WebSearchResult[]>
+  webSearchFunction: WebSearchFunction
   pLimitInstance?: any
   signal?: AbortSignal
 }) {
@@ -380,13 +399,7 @@ export async function deepResearch({
   const searchLanguage = searchLanguageCode
   const rootQuery = originalQuery ?? query
 
-  // Use provided pLimit or create a simple one if not provided
-  const limit = pLimitInstance || {
-    async(fn: () => Promise<any>) {
-      return fn()
-    },
-    concurrency: 2,
-  }
+  const limit = pLimitInstance ?? pLimit(2)
   const progress = (step: ResearchStep) => {
     throwIfAborted(signal)
     onProgress(step)
@@ -400,8 +413,9 @@ export async function deepResearch({
       nodeId = retryNode.id
       searchQueries = [
         {
+          ...retryNode.searchPlan,
           query: retryNode.label,
-          researchGoal: retryNode.researchGoal,
+          researchGoal: retryNode.researchGoal ?? retryNode.searchPlan?.researchGoal ?? rootQuery,
           nodeId,
         },
       ]
@@ -415,6 +429,7 @@ export async function deepResearch({
         numQueries: breadth,
         language,
         searchLanguage,
+        searchConstraints,
         aiConfig,
         signal,
       })
@@ -487,89 +502,106 @@ export async function deepResearch({
               learnings: [],
             }
           }
-          progress({
-            type: 'searching',
-            query: searchQuery.query,
-            nodeId: searchQuery.nodeId,
-          })
           try {
-            // search the web
-            const results = await abortable(
-              webSearchFunction(searchQuery.query, {
-                maxResults: 5,
-                lang: languageCode,
-                signal,
-              }),
-              signal,
-            )
-            throwIfAborted(signal)
-            if (!results.length) {
-              throw new Error('No search results found')
-            }
-            console.log(
-              `[DeepResearch] Searched "${searchQuery.query}", found ${results.length} contents`,
-            )
-
-            progress({
-              type: 'search_complete',
-              results,
-              nodeId: searchQuery.nodeId,
-            })
-            // Breadth for the next search is half of the current breadth
+            let plan = resolveSearchPlan(searchPlanSchema.parse(searchQuery), searchConstraints)
             const nextBreadth = Math.ceil(breadth / 2)
-
-            const searchResultGenerator = processSearchResult({
-              query: searchQuery.query,
-              researchGoal: searchQuery.researchGoal,
-              results,
-              numFollowUpQuestions: nextBreadth,
-              language,
-              aiConfig,
-              signal,
-            })
             let searchResult: PartialProcessedSearchResult = {}
-
-            for await (const chunk of parseStreamingJson(
-              searchResultGenerator.fullStream,
-              searchResultTypeSchema,
-              (value) => !!value.learnings?.length,
-            )) {
+            for (let attempt = 1; attempt <= 2; attempt++) {
               throwIfAborted(signal)
-              if (chunk.type === 'object') {
-                searchResult = chunk.value
-                progress({
-                  type: 'processing_search_result',
-                  result: chunk.value,
-                  query: searchQuery.query,
-                  nodeId: searchQuery.nodeId,
-                })
-              } else if (chunk.type === 'reasoning') {
-                progress({
-                  type: 'processing_search_result_reasoning',
-                  delta: chunk.delta,
-                  nodeId: searchQuery.nodeId,
-                })
-              } else if (chunk.type === 'error') {
-                progress({
-                  type: 'error',
-                  message: chunk.message,
-                  nodeId: searchQuery.nodeId,
-                })
-                break
-              } else if (chunk.type === 'bad-end') {
-                progress({
-                  type: 'error',
-                  message: 'Invalid structured output',
-                  nodeId: searchQuery.nodeId,
-                })
-                break
+              progress({
+                type: 'searching',
+                query: plan.query,
+                searchPlan: plan,
+                attempt,
+                nodeId: searchQuery.nodeId,
+              })
+              let limitations: SearchLimitation[] = []
+              const results = await abortable(
+                webSearchFunction(plan.query, {
+                  ...plan,
+                  maxResults: 5,
+                  lang: searchLanguageCode ?? languageCode,
+                  signal,
+                  onNotice: (value) => {
+                    limitations = value
+                  },
+                }),
+                signal,
+              )
+              throwIfAborted(signal)
+              progress({
+                type: 'search_complete',
+                results,
+                limitations,
+                nodeId: searchQuery.nodeId,
+              })
+              const searchResultGenerator = processSearchResult({
+                query: plan.query,
+                searchPlan: plan,
+                researchGoal: plan.researchGoal,
+                results,
+                numFollowUpQuestions: nextBreadth,
+                language,
+                aiConfig,
+                signal,
+              })
+              searchResult = {}
+
+              for await (const chunk of parseStreamingJson(
+                searchResultGenerator.fullStream,
+                searchResultTypeSchema,
+                (value) => Array.isArray(value.learnings),
+              )) {
+                throwIfAborted(signal)
+                if (chunk.type === 'object') {
+                  searchResult = chunk.value
+                  progress({
+                    type: 'processing_search_result',
+                    result: chunk.value,
+                    query: plan.query,
+                    nodeId: searchQuery.nodeId,
+                  })
+                } else if (chunk.type === 'reasoning') {
+                  progress({
+                    type: 'processing_search_result_reasoning',
+                    delta: chunk.delta,
+                    nodeId: searchQuery.nodeId,
+                  })
+                } else if (chunk.type === 'error') {
+                  throw new Error(chunk.message)
+                } else if (chunk.type === 'bad-end') {
+                  throw new Error('Invalid structured output')
+                }
               }
+
+              searchResult = searchResultTypeSchema
+                .extend({ relevantUrls: z.array(z.string()) })
+                .parse(searchResult)
+              const relevant = searchResult.relevantUrls
+              searchResult.learnings = finalizeLearningsFromSearchResults(
+                searchResult.learnings,
+                Array.isArray(relevant)
+                  ? results.filter((item) => relevant.includes(item.url))
+                  : results,
+              )
+              // Keep only verified evidence; a plausible but unsupported learning is not a successful search.
+              searchResult.learnings = searchResult.learnings.filter((item) => !!item.evidence)
+              if (searchResult.learnings.length || attempt === 2) break
+              const rewrite = searchResult.rewriteQuery?.trim()
+              if (
+                !rewrite ||
+                rewrite.toLowerCase().replace(/\s+/g, ' ') ===
+                  plan.query.toLowerCase().replace(/\s+/g, ' ')
+              )
+                break
+              // The extractor can change only query text. All filters remain frozen.
+              plan = { ...plan, query: rewrite }
             }
-            console.log(`Processed search result for ${searchQuery.query}`, searchResult)
-            searchResult.learnings = finalizeLearningsFromSearchResults(
-              searchResult.learnings,
-              results,
-            )
+            if (!searchResult.learnings?.length) {
+              throw new Error(
+                'No relevant, verifiable evidence found within the search constraints',
+              )
+            }
             const allLearnings = [...(learnings ?? []), ...(searchResult.learnings ?? [])]
             const nextDepth = currentDepth + 1
 
@@ -598,6 +630,7 @@ export async function deepResearch({
                 const r = await deepResearch({
                   query: nextQuery,
                   originalQuery: rootQuery,
+                  searchConstraints: plan,
                   breadth: nextBreadth,
                   maxDepth,
                   learnings: allLearnings,
@@ -638,7 +671,10 @@ export async function deepResearch({
       ),
     )
     throwIfAborted(signal)
-    const finalLearnings = deduplicateLearnings(results.flatMap((result) => result.learnings))
+    const finalLearnings = deduplicateLearnings([
+      ...(learnings ?? []),
+      ...results.flatMap((result) => result.learnings),
+    ])
     // Complete should only be called once
     if (nodeId === '0') {
       progress({
@@ -658,7 +694,7 @@ export async function deepResearch({
       nodeId,
     })
     return {
-      learnings: [],
+      learnings: learnings ?? [],
     }
   }
 }

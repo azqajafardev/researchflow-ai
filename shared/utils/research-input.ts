@@ -1,3 +1,4 @@
+import { searchConstraintsSchema } from '~~/shared/utils/search-plan'
 import { z } from 'zod'
 import { researchLearningSchema } from '~~/shared/utils/research-learning'
 
@@ -49,6 +50,7 @@ export const researchRequestSchema = researchInputSchema
   .extend({
     languageCode: supportedLocale,
     searchLanguageCode: supportedLocale.optional(),
+    searchConstraints: searchConstraintsSchema.optional(),
     /** Root user goal preserved when retrying or recursing with a narrowed query */
     originalQuery: z.string().trim().min(1).optional(),
     learnings: z.array(researchLearningSchema).default([]),

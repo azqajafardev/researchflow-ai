@@ -23,3 +23,198 @@ describe('resolveWebSearchApiBase', () => {
     assert.equal(resolveWebSearchApiBase('google-pse', 'https://www.googleapis.com'), undefined)
   })
 })
+
+import { buildSearchFilters, mapFirecrawlResults, searchWeb } from '../lib/core/web-search.ts'
+import { searchPlanSchema, resolveSearchPlan } from '../shared/utils/search-plan.ts'
+
+describe('provider search filters', () => {
+  it('maps news, time and domains to Tavily and Firecrawl native filters', () => {
+    const options = {
+      intent: 'news' as const,
+      timeRange: 'week' as const,
+      includeDomains: ['example.com'],
+      lang: 'en',
+    }
+    const tavily = buildSearchFilters('tavily', options)
+    assert.equal(tavily.tavily.topic, 'news')
+    assert.equal(tavily.tavily.timeRange, 'week')
+    assert.deepEqual(tavily.tavily.includeDomains, ['example.com'])
+    assert.equal(tavily.tavily.language, 'en')
+    const firecrawl = buildSearchFilters('firecrawl', options)
+    assert.deepEqual(firecrawl.firecrawl.sources, ['news'])
+    assert.equal(firecrawl.firecrawl.tbs, 'qdr:w')
+    assert.deepEqual(firecrawl.limitations, ['language'])
+  })
+  it('maps calendar dates without leaking dates into keywords', () => {
+    const options = { startDate: '2026-09-01', endDate: '2026-09-07' }
+    assert.equal(
+      buildSearchFilters('firecrawl', options).firecrawl.tbs,
+      'cdr:1,cd_min:09/01/2026,cd_max:09/07/2026',
+    )
+    assert.equal(buildSearchFilters('tavily', options).tavily.start_date, options.startDate)
+    assert.deepEqual(buildSearchFilters('google-pse', options).limitations, ['time'])
+  })
+  it('maps PSE relative dates, one domain, and its Chinese language code', () => {
+    const filters = buildSearchFilters('google-pse', {
+      intent: 'news',
+      timeRange: 'week',
+      includeDomains: ['example.com'],
+      lang: 'zh',
+    })
+    assert.deepEqual(filters.google, {
+      lr: 'lang_zh-CN',
+      dateRestrict: 'w1',
+      siteSearch: 'example.com',
+      siteSearchFilter: 'i',
+    })
+    assert.deepEqual(filters.limitations, ['news'])
+    assert.deepEqual(
+      buildSearchFilters('google-pse', { includeDomains: ['a.com', 'b.com'] }).limitations,
+      ['domains'],
+    )
+  })
+  it('does not assume CRW implements Firecrawl-specific search filters', () => {
+    const filters = buildSearchFilters('crw', {
+      intent: 'news',
+      timeRange: 'week',
+      includeDomains: ['example.com'],
+      lang: 'en',
+    })
+    assert.deepEqual(filters.firecrawl, {})
+    assert.deepEqual(filters.limitations, ['news', 'time', 'domains', 'language'])
+  })
+  it('retains news snippets and dates even when scraping returns no markdown', () => {
+    assert.deepEqual(
+      mapFirecrawlResults([
+        {
+          url: 'https://example.com/news',
+          title: 'Launch',
+          snippet: 'A new product',
+          date: '2 hours ago',
+        },
+      ]),
+      [
+        {
+          url: 'https://example.com/news',
+          title: 'Launch',
+          content: 'A new product',
+          sourceType: 'search-result',
+          publishedAt: '2 hours ago',
+        },
+      ],
+    )
+    assert.equal(
+      mapFirecrawlResults([
+        { markdown: 'Page body', metadata: { sourceURL: 'https://example.com' } },
+      ])[0]?.sourceType,
+      'page',
+    )
+    assert.deepEqual(mapFirecrawlResults([{ title: 'No usable text' }]), [])
+  })
+  it('sends native PSE filters on the actual request', async () => {
+    const previous = globalThis.fetch
+    globalThis.fetch = async (input) => {
+      const url = new URL(String(input))
+      assert.equal(url.searchParams.get('q'), 'AI product launches')
+      assert.equal(url.searchParams.get('dateRestrict'), 'w1')
+      assert.equal(url.searchParams.get('lr'), 'lang_en')
+      return Response.json({
+        items: [{ link: 'https://example.com', title: 'A launch', snippet: 'News content' }],
+      })
+    }
+    try {
+      const notices: string[][] = []
+      const results = await searchWeb(
+        { provider: 'google-pse', apiKey: 'test-only', googlePseId: 'test-only' },
+        'AI product launches',
+        {
+          intent: 'news',
+          timeRange: 'week',
+          lang: 'en',
+          onNotice: (value) => notices.push(value),
+        },
+      )
+      assert.equal(results.length, 1)
+      assert.deepEqual(notices, [['news']])
+    } finally {
+      globalThis.fetch = previous
+    }
+  })
+})
+
+describe('search plan validation', () => {
+  it('accepts legacy query objects, rejects invalid dates/domains, and never truncates meaningful queries', () => {
+    const query =
+      'A detailed entity-specific query with a meaningful long product name and comparison'
+    assert.equal(searchPlanSchema.parse({ query, researchGoal: '' }).query, query)
+    assert.equal(
+      searchPlanSchema.safeParse({ query, researchGoal: '', startDate: '2026-02-30' }).success,
+      false,
+    )
+    assert.equal(
+      searchPlanSchema.safeParse({
+        query,
+        researchGoal: '',
+        includeDomains: ['https://example.com/path'],
+      }).success,
+      false,
+    )
+  })
+  it('preserves inherited dates and rejects inverted intervals', () => {
+    const plan = { query: 'AI news', researchGoal: '', timeRange: 'year' as const }
+    const resolved = resolveSearchPlan(plan, { startDate: '2026-09-01', endDate: '2026-09-07' })
+    assert.equal(resolved.timeRange, undefined)
+    assert.equal(resolved.startDate, '2026-09-01')
+    assert.throws(() =>
+      resolveSearchPlan({ ...plan, startDate: '2026-09-07', endDate: '2026-09-01' }),
+    )
+  })
+})
+
+import { createServer } from 'node:http'
+import { once } from 'node:events'
+
+it('sends Firecrawl native news filters through the installed SDK and consumes its news response', async () => {
+  let request: any
+  const server = createServer(async (req, res) => {
+    let body = ''
+    for await (const chunk of req) body += chunk
+    request = JSON.parse(body)
+    res.setHeader('Content-Type', 'application/json')
+    res.end(
+      JSON.stringify({
+        success: true,
+        data: {
+          news: [
+            {
+              title: 'Launch',
+              url: 'https://example.com',
+              snippet: 'New editor',
+              date: '2026-09-06',
+            },
+          ],
+        },
+      }),
+    )
+  }).listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  try {
+    const address = server.address() as { port: number }
+    const results = await searchWeb(
+      { provider: 'firecrawl', apiKey: 'test-only', apiBase: `http://127.0.0.1:${address.port}` },
+      'AI product launches',
+      { intent: 'news', timeRange: 'week' },
+    )
+    assert.equal(request.query, 'AI product launches')
+    assert.equal(request.tbs, 'qdr:w')
+    assert.deepEqual(request.sources, ['news'])
+    assert.deepEqual(request.scrapeOptions.formats, ['markdown'])
+    assert.equal(results[0]?.publishedAt, '2026-09-06')
+    assert.equal(results[0]?.sourceType, 'search-result')
+  } finally {
+    server.closeAllConnections()
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    )
+  }
+})
