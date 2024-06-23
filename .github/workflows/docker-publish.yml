@@ -4,7 +4,16 @@ on:
   push:
     branches:
       - main  # 当推送到 main 分支时触发
+    tags:
+      - 'v*'  # 推送版本标签时发布对应版本的镜像
+  release:
+    types: [published]
   workflow_dispatch:  # 允许手动触发
+
+# 标签推送和 Release 发布可能先后触发；同一引用串行执行，避免并发发布。
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/deep-research-web
@@ -42,6 +51,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
+          # latest 仅跟随默认分支，发布旧版本时不覆盖它。
+          flavor: latest=false
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -102,6 +113,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
+          # 与各架构构建保持一致，版本发布只更新版本标签。
+          flavor: latest=false
           tags: |
             type=ref,event=branch
             type=ref,event=pr
