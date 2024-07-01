@@ -29,7 +29,8 @@ export function generateFeedback({
   })
   const jsonSchema = JSON.stringify(zodToJsonSchema(schema))
   const prompt = [
-    `Given the following query from the user, ask ${numQuestions} follow up questions to clarify the research direction. Return a maximum of ${numQuestions} questions, but feel free to return less if the original query is clear: <query>${query}</query>`,
+    `Given the following query from the user, ask several follow up questions to clarify the research direction. Return a maximum of ${numQuestions} questions. Feel free to return less if the original query is clear, but always provide at least 1 question.`,
+    `<query>${query}</query>`,
     `You MUST respond in JSON matching this JSON schema: ${jsonSchema}`,
     languagePrompt(language),
   ].join('\n\n')

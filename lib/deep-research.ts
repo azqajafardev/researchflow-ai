@@ -112,7 +112,7 @@ export function generateSearchQueries({
     lp += ` Use ${searchLanguage} for the SERP queries.`
   }
   const prompt = [
-    `Given the following prompt from the user, generate a list of SERP queries to research the topic. Return a maximum of ${numQueries} queries, but feel free to return less if the original prompt is clear. Make sure each query is unique and not similar to each other: <prompt>${query}</prompt>\n\n`,
+    `Given the following prompt from the user, generate a list of highly effective Google search queries to research the topic. Return a maximum of ${numQueries} queries, but feel free to return less if the original prompt is clear. Make sure each query is creative, unique and not similar to each other: <prompt>${query}</prompt>`,
     learnings
       ? `Here are some learnings from previous research, use them to generate more specific queries: ${learnings.join(
           '\n',
@@ -182,7 +182,7 @@ function processSearchResult({
   const jsonSchema = JSON.stringify(zodToJsonSchema(schema))
   const contents = results.map((item) => trimPrompt(item.content))
   const prompt = [
-    `Given the following contents from a SERP search for the query <query>${query}</query>, extract key learnings from the contents. For each learning, include the source URL. Return a maximum of ${numLearnings} learnings, but feel free to return less if the contents are clear. Make sure each learning is unique and not similar to each other. The learnings should be as detailed and information dense as possible. Include any entities like people, places, companies, products, things, etc in the learnings, as well as any exact metrics, numbers, or dates. Also generate up to ${numFollowUpQuestions} follow-up questions that could help explore this topic further.`,
+    `Given the following contents from a SERP search for the query <query>${query}</query>, extract ${numLearnings} key learnings from the contents. Make sure each learning is unique and not similar to each other. The learnings should be as detailed and information dense as possible. Include any entities like people, places, companies, products, things, etc in the learnings, as well as any exact metrics, numbers, or dates. Also generate up to ${numFollowUpQuestions} follow-up questions that could help explore this topic further.`,
     `<contents>${contents
       .map(
         (content, index) =>
@@ -211,8 +211,10 @@ export function writeFinalReport({
   const learningsString = trimPrompt(
     learnings
       .map(
-        (learning) =>
-          `<learning url="${learning.url}">\n${learning.learning}\n</learning>`,
+        (learning, index) =>
+          `<learning index="${index + 1}">
+${learning.learning}
+</learning>`,
       )
       .join('\n'),
   )
@@ -221,7 +223,7 @@ export function writeFinalReport({
     `<prompt>${prompt}</prompt>`,
     `Here are all the learnings from previous research:`,
     `<learnings>\n${learningsString}\n</learnings>`,
-    `Write the report using Markdown. When citing information, use numbered citations with superscript numbers in square brackets (e.g., [1], [2], [3]). Each citation should correspond to the index of the source in your learnings list. DO NOT include the actual URLs in the report text - only use the citation numbers.`,
+    `Write the report using Markdown. Be factual, NEVER lie or make things up. Cite learnings from previous research when needed, using numbered citations like "[1]". Each citation should correspond to the index of the source in your learnings list. DO NOT include the actual URLs in the report text - only use the citation numbers.`,
     languagePrompt(language),
     `## Deep Research Report`,
   ].join('\n\n')
