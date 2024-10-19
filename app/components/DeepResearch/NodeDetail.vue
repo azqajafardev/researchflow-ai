@@ -34,7 +34,42 @@
             ]
       "
     />
-    <h2 class="text-xl font-bold my-2">
+    <UAlert
+      v-if="node.status === 'no_evidence' && node.searchAssessment"
+      class="my-3"
+      icon="i-lucide-file-search"
+      color="neutral"
+      variant="soft"
+      :title="$t('searchAssessment.title')"
+      :description="$t(`searchAssessment.reasons.${node.searchAssessment.reason}`)"
+      :actions="
+        disabled
+          ? []
+          : [
+              {
+                label: $t('webBrowsing.retry'),
+                color: 'neutral',
+                onClick: () => $emit('retry', node.id),
+              },
+            ]
+      "
+    >
+      <template #description>
+        <p>{{ $t(`searchAssessment.reasons.${node.searchAssessment.reason}`) }}</p>
+        <p class="mt-2">{{
+          $t('searchAssessment.counts', {
+            results: node.searchAssessment.resultsCount,
+            relevant: node.searchAssessment.relevantCount,
+            findings: node.searchAssessment.findingsCount,
+            verified: node.searchAssessment.verifiedCount,
+          })
+        }}</p>
+        <p v-if="node.searchAssessment.extractionRetried" class="mt-2">{{
+          $t('searchAssessment.extractionRetried')
+        }}</p>
+      </template>
+    </UAlert>
+    <h2 class="text-xl font-bold my-2 break-words">
       {{ node.label ?? $t('webBrowsing.generating') }}
     </h2>
 

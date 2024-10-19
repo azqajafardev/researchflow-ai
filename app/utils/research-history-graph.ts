@@ -1,3 +1,4 @@
+import { searchAssessmentSchema, type SearchAssessment } from '~~/shared/utils/search-assessment'
 import {
   searchPlanSchema,
   type SearchPlan,
@@ -18,6 +19,7 @@ export const researchHistoryNodeStatusSchema = z.enum([
   'processing_search_result',
   'processing_search_result_reasoning',
   'node_complete',
+  'no_evidence',
   'error',
 ])
 
@@ -33,6 +35,7 @@ export const researchHistoryGraphNodeSchema = z.object({
   label: z.string(),
   researchGoal: z.string().optional(),
   searchPlan: searchPlanSchema.optional(),
+  searchAssessment: searchAssessmentSchema.optional(),
   searchAttempt: z.number().int().min(1).max(2).optional(),
   searchLimitations: z.array(z.enum(['news', 'time', 'domains', 'language'])).optional(),
   generateQueriesReasoning: z.string().optional(),
@@ -59,6 +62,7 @@ export function serializeResearchHistoryNode(node: {
   researchGoal?: string
   searchPlan?: SearchPlan
   searchAttempt?: number
+  searchAssessment?: SearchAssessment
   searchLimitations?: SearchLimitation[]
   generateQueriesReasoning?: string
   generateLearningsReasoning?: string
@@ -87,6 +91,7 @@ export function serializeResearchHistoryNode(node: {
           },
         }
       : {}),
+    ...(node.searchAssessment ? { searchAssessment: { ...node.searchAssessment } } : {}),
     ...(node.searchAttempt ? { searchAttempt: node.searchAttempt } : {}),
     ...(node.searchLimitations?.length ? { searchLimitations: [...node.searchLimitations] } : {}),
     generateQueriesReasoning: node.generateQueriesReasoning,

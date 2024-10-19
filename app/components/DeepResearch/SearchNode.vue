@@ -40,6 +40,10 @@
       case 'node_complete':
         result.icon = 'i-lucide-circle-check-big'
         break
+      case 'no_evidence':
+        result.icon = 'i-lucide-file-search'
+        result.color = 'neutral'
+        break
       case 'error':
         result.icon = 'i-lucide-octagon-x'
         result.color = 'error'

@@ -4,29 +4,6 @@
 
 This is a web UI for https://github.com/dzhng/deep-research, with several improvements and fixes.
 
-### Evidence inspection and focused follow-ups
-
-Click a report citation or **Inspect evidence and follow up** to see its finding, source, retrieval time, and saved excerpt. Excerpts are stored only after matching retrieved content; page content and search results are labeled separately. Matching an excerpt does not establish that it fully supports the finding.
-
-Ask a focused follow-up to search up to two directions in one round and update only Markdown blocks citing that finding (whole tables and lists are treated as blocks). Each direction can retry once with a revised query when evidence is insufficient. Successful follow-ups append evidence with stable citation numbers and save a separate history entry. Failures, cancellation, or missing matched excerpts leave the original report intact. This works in both client and server modes, and older history entries remain supported. History is still browser-local; export important research.
-
-### Structured search planning
-
-Search tasks separate a focused `query` from `intent`, `timeRange` or `startDate`/`endDate`, optional `includeDomains`, and `sourcePreference`. For example, recent AI news can start with `AI product launches` plus `intent: news` and `timeRange: week`, then investigate named events in primary sources. The planner is instructed to use a week for unspecified “latest news”, cover complementary angles, and avoid keyword piles such as dates plus `arXiv` plus `(official blog OR paper)`. It does not truncate queries or impose a fixed publisher list.
-
-| Provider | Native filters used | Known limitations |
-| --- | --- | --- |
-| Tavily | Topic, relative or calendar dates, domains, language preference | Language is a preference, not a strict result-language guarantee. Per-task intent overrides the configured topic; the configured topic remains the fallback for older plans. |
-| Firecrawl | Web/news source, relative or calendar dates (`tbs`), domains | The installed search SDK has no language filter. News snippets are retained even without scraped Markdown. |
-| Google PSE | Relative dates (`dateRestrict`), one domain, language | No equivalent news vertical or calendar publication-date interval; multiple domains are not sent as a single site restriction. |
-| CRW | Existing basic search and scraping | Firecrawl-specific filters are not assumed to work. |
-
-Node details show the requested search window, whether a query was rewritten, provider limitations, and any source date. These fields survive history export/import and node retries. Publication dates are source metadata, not proof of when an event happened. Provider scores are retained but are not compared across providers.
-
-The existing extraction call now checks topic and time relevance before accepting evidence. Findings need both an allowed source URL and an excerpt matched to retrieved text. A node with no verified relevant findings may search once more using a model-proposed simpler query; its filters stay fixed. Recursive searches also inherit the parent's time window. No network/authentication-error rewrite or automatic date widening is performed. A search node therefore makes at most two application-level search attempts, in addition to any transport retries performed by the provider SDK. Unsupported filters are disclosed and checked against source content; they cannot guarantee exhaustive coverage.
-
-`pnpm test` covers provider mappings, actual PSE request parameters, news snippet preservation, search-language separation, bounded recovery, date inheritance, invalid evidence, cancellation, and legacy plans. Live relevance still depends on the configured model and search provider. For a live before/after comparison, keep provider/model/breadth/depth fixed and try: “最近的 AI 新闻”, “2026 年 9 月 1–7 日的 AI 产品发布”, a named product's official announcement, and a non-news technical comparison. Compare relevant unique events, dated/primary evidence, latency, and search call count; do not treat mock tests as measured search-quality gains.
-
 Features:
 
 - 🚀 **Safe & Secure**: In Client Mode, config and API requests stay in your browser locally
@@ -36,6 +13,8 @@ Features:
 - 🤖 **Supports more models**: Uses plain prompts instead of newer, less widely supported features like Structured Outputs. This ensures to work with more providers that haven't caught up with the latest OpenAI capabilities.
 - 🐳 **Docker support**: Deploy in your environment in one-line command
 - 🔧 **Server Mode**: Deploy with environment variables, no need for users to configure API keys
+- 🔎 **Evidence and follow-ups**: Inspect source excerpts from report citations, then research a finding further and update related passages while keeping the original report in history
+- 🎯 **Focused search**: Separate queries from time and source filters, check result relevance, and retry once with a revised query when evidence is insufficient
 
 Currently available providers:
 

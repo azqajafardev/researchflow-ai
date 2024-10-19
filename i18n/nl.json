@@ -240,5 +240,18 @@
       "language": "zoektaal"
     },
     "published": "Brondatum: {date}"
+  },
+  "searchAssessment": {
+    "title": "Geen bruikbaar bewijs uit deze zoekactie",
+    "reasons": {
+      "verified": "Bruikbaar bewijs gevonden.",
+      "no_results": "De zoekdienst leverde geen bruikbare inhoud. Pas de zoekopdracht aan of controleer de periode en bronnen.",
+      "irrelevant": "Het model beoordeelde de resultaten als niet passend bij het onderzoeksdoel of de gevraagde periode.",
+      "no_findings": "Mogelijk relevante bronnen gevonden, maar geen bevindingen die de vraag beantwoorden.",
+      "unmatched_sources": "De bevindingen konden niet aan gevonden relevante bronnen worden gekoppeld en zijn niet in het rapport opgenomen.",
+      "unmatched_quotes": "De citaten kwamen niet overeen met de opgehaalde inhoud; deze bevindingen zijn niet in het rapport opgenomen."
+    },
+    "counts": "Laatste zoekactie: {results} resultaten, {relevant} relevant beoordeeld; {findings} bevindingen, {verified} geverifieerd.",
+    "extractionRetried": "Het ophalen van letterlijke citaten is opnieuw geprobeerd."
   }
 }

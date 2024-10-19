@@ -244,5 +244,18 @@
       "language": "search language"
     },
     "published": "Source date: {date}"
+  },
+  "searchAssessment": {
+    "title": "No usable evidence from this search",
+    "reasons": {
+      "verified": "Usable evidence found.",
+      "no_results": "The search provider returned no usable content. Adjust the query or check the date and source scope.",
+      "irrelevant": "The model judged the results unrelated to the research goal or requested time window.",
+      "no_findings": "Potentially relevant sources were found, but no findings answered the question.",
+      "unmatched_sources": "Extracted findings could not be matched to returned, relevant sources and were excluded from the report.",
+      "unmatched_quotes": "Source excerpts could not be matched to retrieved content; these findings were excluded from the report."
+    },
+    "counts": "Latest search: {results} results, {relevant} judged relevant; {findings} findings extracted, {verified} verified.",
+    "extractionRetried": "Extraction of verbatim excerpts was retried."
   }
 }

@@ -141,7 +141,11 @@ describe('structured search execution', () => {
     })
     assert.equal(calls, 2)
     assert.equal(result?.learnings.length, 0)
-    assert.ok(steps.some((s) => s.type === 'error' && /No relevant/.test(s.message)))
+    assert.ok(steps.some((s) => s.type === 'no_evidence' && s.assessment.reason === 'no_results'))
+    assert.equal(
+      steps.some((s) => s.type === 'error'),
+      false,
+    )
   })
 
   it('does not accept fabricated quotes or repeatedly send the same query', async () => {
@@ -149,6 +153,12 @@ describe('structured search execution', () => {
       { queries: [plan] },
       {
         learnings: [{ ...finding, quote: 'This text is not in the source.' }],
+        relevantUrls: [url],
+        rewriteQuery: plan.query,
+        followUpQuestions: [],
+      },
+      {
+        learnings: [{ ...finding, quote: 'Still not in the source.' }],
         relevantUrls: [url],
         rewriteQuery: plan.query,
         followUpQuestions: [],
@@ -161,6 +171,85 @@ describe('structured search execution', () => {
     })
     assert.equal(calls, 1)
     assert.equal(result?.learnings.length, 0)
+  })
+
+  it('repairs quotation extraction on the same sources without another web search', async () => {
+    const prompts: string[] = []
+    mockModel(
+      [
+        { queries: [plan] },
+        {
+          learnings: [{ ...finding, quote: '这是翻译后的摘录，无法与英文原文匹配。' }],
+          relevantUrls: [url],
+          followUpQuestions: [],
+        },
+        { learnings: [finding], relevantUrls: [url], followUpQuestions: [] },
+      ],
+      prompts,
+    )
+    let calls = 0
+    const { result, steps } = await run(async () => {
+      calls++
+      return [source]
+    })
+    assert.equal(calls, 1)
+    assert.equal(prompts.length, 3)
+    assert.match(prompts[2]!, /SAME contents/)
+    assert.equal(result?.learnings.length, 1)
+    assert.equal(
+      steps.some((s) => s.type === 'error' || s.type === 'no_evidence'),
+      false,
+    )
+  })
+
+  it('reports the reason after one failed extraction repair and does not fabricate evidence', async () => {
+    const invalid = {
+      learnings: [{ ...finding, quote: 'Unmatched fabricated quote.' }],
+      relevantUrls: [url],
+      followUpQuestions: [],
+    }
+    mockModel([{ queries: [plan] }, invalid, invalid])
+    let calls = 0
+    const { result, steps } = await run(async () => {
+      calls++
+      return [source]
+    })
+    assert.equal(calls, 1)
+    assert.equal(result?.learnings.length, 0)
+    const outcome = steps.find((s) => s.type === 'no_evidence')
+    assert.deepEqual(outcome?.assessment, {
+      reason: 'unmatched_quotes',
+      resultsCount: 1,
+      relevantCount: 1,
+      findingsCount: 1,
+      verifiedCount: 0,
+      extractionRetried: true,
+    })
+    assert.equal(
+      steps.some((s) => s.type === 'error'),
+      false,
+    )
+  })
+
+  it('passes provider syntax guidance to planning and extraction while retaining precise queries', async () => {
+    const exactQuery = '"ECONNRESET" filetype:pdf'
+    const prompts: string[] = []
+    mockModel(
+      [
+        { queries: [{ ...plan, query: exactQuery, intent: 'general' }] },
+        { learnings: [finding], relevantUrls: [url], followUpQuestions: [] },
+      ],
+      prompts,
+    )
+    const search: WebSearchFunction = async (query) => {
+      assert.equal(query, exactQuery)
+      return [source]
+    }
+    search.provider = 'firecrawl'
+    await run(search)
+    for (const prompt of prompts)
+      assert.match(prompt, /Supported query syntax: quoted exact phrases/)
+    assert.doesNotMatch(prompts[0]!, /function searchQueryGuidance/)
   })
 
   it('does not retry network errors or execute invalid planner filters', async () => {

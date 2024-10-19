@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { SearchAssessment } from '~~/shared/utils/search-assessment'
   import type { SearchPlan, SearchLimitation } from '~~/shared/utils/search-plan'
   import {
     deepResearch,
@@ -36,6 +37,7 @@
     researchGoal?: string
     searchPlan?: SearchPlan
     searchAttempt?: number
+    searchAssessment?: SearchAssessment
     searchLimitations?: SearchLimitation[]
     /** Reasoning content when generating queries for the next iteration. */
     generateQueriesReasoning?: string
@@ -161,6 +163,7 @@
           node.label = step.query
           node.searchPlan = step.searchPlan
           node.searchAttempt = step.attempt
+          node.searchAssessment = undefined
           node.learnings = []
           flowRef.value?.updateNode(nodeId, { title: step.query })
         }
@@ -200,13 +203,24 @@
         break
       }
 
+      case 'no_evidence': {
+        if (node) {
+          node.learnings = []
+          node.searchAssessment = step.assessment
+          delete searchResults.value[nodeId]
+        }
+        break
+      }
+
       case 'error':
         console.error(`[DeepResearch] node ${nodeId} error:`, node, step.message)
-        if (node) node.learnings = []
-        node!.error = step.message
+        if (node) {
+          node.learnings = []
+          node.error = step.message
+        }
         toast.add({
           title: t('webBrowsing.nodeFailedToast', {
-            label: node!.label ?? nodeId,
+            label: node?.label ?? nodeId,
           }),
           description: step.message,
           color: 'error',
@@ -367,6 +381,7 @@
       nodeCurrentData = { ...node }
       node.status = undefined
       node.error = undefined
+      node.searchAssessment = undefined
       node.searchResults = undefined
       node.learnings = undefined
       node.generateLearningsReasoning = undefined
@@ -383,7 +398,10 @@
 
     try {
       const result = await startResearch(options, nodeCurrentData)
-      if (!result?.learnings.length) restoreResearchGraph(graphSnapshot)
+      const hadEvidence = graphSnapshot.nodes.some(
+        (item) => (item.id === nodeId || isChildNode(nodeId, item.id)) && item.learnings?.length,
+      )
+      if (!result?.learnings.length && hadEvidence) restoreResearchGraph(graphSnapshot)
       return result
     } catch (error) {
       restoreResearchGraph(graphSnapshot)

@@ -22,10 +22,10 @@ export type WebSearchOptions = SearchConstraints & {
   onNotice?: (limitations: SearchLimitation[]) => void
 }
 
-export type WebSearchFunction = (
+export type WebSearchFunction = ((
   query: string,
   options: WebSearchOptions,
-) => Promise<WebSearchResult[]>
+) => Promise<WebSearchResult[]>) & { provider?: ConfigWebSearchProvider }
 
 export type WebSearchConfig = {
   provider: ConfigWebSearchProvider
@@ -273,5 +273,7 @@ export async function searchWeb(
 
 /** Create a reusable search function bound to a fixed config snapshot. */
 export function createWebSearch(config: WebSearchConfig): WebSearchFunction {
-  return (query, options) => searchWeb(config, query, options)
+  const search: WebSearchFunction = (query, options) => searchWeb(config, query, options)
+  search.provider = config.provider
+  return search
 }

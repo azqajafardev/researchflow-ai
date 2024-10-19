@@ -161,6 +161,7 @@ export default defineEventHandler(async (event) => {
 
   // Create server-side web search function
   const serverWebSearch = createServerWebSearch(runtimeConfig)
+  serverWebSearch.provider = runtimeConfig.public.webSearchProvider as ConfigWebSearchProvider
 
   // Create server-side pLimit instance
   const serverPLimit = pLimit(runtimeConfig.public.webSearchConcurrencyLimit)

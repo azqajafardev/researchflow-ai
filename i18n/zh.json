@@ -244,5 +244,18 @@
       "language": "检索语言"
     },
     "published": "来源标注日期：{date}"
+  },
+  "searchAssessment": {
+    "title": "本次未获得可用证据",
+    "reasons": {
+      "verified": "已获得可用证据。",
+      "no_results": "搜索服务未返回可用内容。可调整查询词，或检查时间和来源范围。",
+      "irrelevant": "模型判断返回内容不符合本次研究目标或时间要求。",
+      "no_findings": "找到可能相关的来源，但未提取出能够回答问题的结论。",
+      "unmatched_sources": "提取的结论未能对应到返回且被判为相关的来源，未纳入报告。",
+      "unmatched_quotes": "结论的来源摘录未能与检索内容匹配，未纳入报告。"
+    },
+    "counts": "最近一次搜索：{results} 条结果，{relevant} 条判为相关；提取 {findings} 条结论，{verified} 条通过校验。",
+    "extractionRetried": "已尝试重新提取原文摘录。"
   }
 }

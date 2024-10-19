@@ -1,3 +1,5 @@
+import { assessSearchLearnings, type SearchAssessment } from '~~/shared/utils/search-assessment'
+import type { ConfigWebSearchProvider } from '~~/shared/types/config'
 import { deduplicateLearnings } from '~~/shared/utils/research-learning'
 import type { ReportRevision } from '~~/shared/utils/report-revision'
 import { streamText } from 'ai'
@@ -19,6 +21,7 @@ import type { ResearchLearning, ResearchResult } from '~~/shared/types/research-
 import {
   searchPlanSchema,
   searchPlanningRules,
+  searchQueryGuidance,
   resolveSearchPlan,
   type SearchConstraints,
   type SearchPlan,
@@ -26,10 +29,7 @@ import {
 } from '~~/shared/utils/search-plan'
 import type { WebSearchFunction } from '~~/lib/core/web-search'
 import { normalizeGeneratedSearchQueries } from '~~/shared/utils/search-query'
-import {
-  escapePromptAttribute,
-  finalizeLearningsFromSearchResults,
-} from '~~/shared/utils/search-learning'
+import { escapePromptAttribute } from '~~/shared/utils/search-learning'
 import { abortable, isAbortError, throwIfAborted } from '~~/shared/utils/abort'
 
 export type { ResearchResult } from '~~/shared/types/research-session'
@@ -86,6 +86,7 @@ export type ResearchStep =
       result?: ProcessedSearchResult
       nodeId: string
     }
+  | { type: 'no_evidence'; assessment: SearchAssessment; nodeId: string }
   | { type: 'error'; message: string; nodeId: string }
   | { type: 'complete'; learnings: ProcessedSearchResult['learnings'] }
 
@@ -105,6 +106,7 @@ export function generateSearchQueries({
   language,
   searchLanguage,
   searchConstraints,
+  searchProvider,
   aiConfig,
   signal,
 }: {
@@ -118,6 +120,7 @@ export function generateSearchQueries({
   /** Force the LLM to generate serp queries in a certain language */
   searchLanguage?: string
   searchConstraints?: SearchConstraints
+  searchProvider?: ConfigWebSearchProvider
   aiConfig: ConfigAi
   signal?: AbortSignal
 }) {
@@ -144,6 +147,7 @@ export function generateSearchQueries({
   const prompt = [
     `Generate up to ${numQueries} distinct web search tasks. Return fewer when the focus is narrow.`,
     searchPlanningRules,
+    searchQueryGuidance(searchProvider),
     searchConstraints
       ? `Inherited search constraints (keep the time window): ${JSON.stringify(searchConstraints)}`
       : '',
@@ -193,6 +197,8 @@ function processSearchResult({
   query,
   researchGoal,
   searchPlan,
+  searchProvider,
+  repairExtraction,
   results,
   numLearnings = 5,
   numFollowUpQuestions = 3,
@@ -203,6 +209,8 @@ function processSearchResult({
   query: string
   researchGoal?: string
   searchPlan?: SearchPlan
+  searchProvider?: ConfigWebSearchProvider
+  repairExtraction?: boolean
   results: WebSearchResult[]
   language: string
   numLearnings?: number
@@ -239,7 +247,7 @@ function processSearchResult({
       .string()
       .optional()
       .describe(
-        'Only if results are insufficient: ONE simpler query preserving the goal, named entities, and language. No dates, Boolean operators, or source-type keyword piles. Omit if no useful rewrite.',
+        'Only if results are insufficient: ONE simpler query preserving the goal, named entities, and language. Preserve meaningful exact terms and supported operators; avoid unrelated keyword piles. Omit if no useful rewrite.',
       ),
     followUpQuestions: z
       .array(z.string())
@@ -256,6 +264,10 @@ function processSearchResult({
       : '',
     searchPlan
       ? `Search constraints: ${JSON.stringify(searchPlan)}. Provider filters may be unavailable: verify dates and source relevance in the text. Publication metadata is a hint, not proof of an event date. Unknown dates must not become claims of recent events. Prefer primary evidence when sourcePreference=primary; do not fabricate it.`
+      : '',
+    searchQueryGuidance(searchProvider),
+    repairExtraction
+      ? 'The previous extraction failed source URL or verbatim excerpt matching. Repair extraction from these SAME contents. Copy the source URL exactly and copy one continuous 8–1500 character excerpt in its ORIGINAL language (do not translate, paraphrase, splice or add ellipses). Translate only the learning. Keep the same relevance criteria. Do not propose a different search just to repair quotation formatting.'
       : '',
     `Rules:
 - First assess relevance to BOTH the query and research goal. Reject keyword coincidences, old events republished as news, and off-topic sources. Deduplicate the same event; extract no learnings from rejected URLs. If nothing qualifies, return empty learnings and relevantUrls.
@@ -430,6 +442,7 @@ export async function deepResearch({
         language,
         searchLanguage,
         searchConstraints,
+        searchProvider: webSearchFunction.provider,
         aiConfig,
         signal,
       })
@@ -506,6 +519,8 @@ export async function deepResearch({
             let plan = resolveSearchPlan(searchPlanSchema.parse(searchQuery), searchConstraints)
             const nextBreadth = Math.ceil(breadth / 2)
             let searchResult: PartialProcessedSearchResult = {}
+            let assessment: SearchAssessment | undefined
+            let extractionRetried = false
             for (let attempt = 1; attempt <= 2; attempt++) {
               throwIfAborted(signal)
               progress({
@@ -535,58 +550,67 @@ export async function deepResearch({
                 limitations,
                 nodeId: searchQuery.nodeId,
               })
-              const searchResultGenerator = processSearchResult({
-                query: plan.query,
-                searchPlan: plan,
-                researchGoal: plan.researchGoal,
-                results,
-                numFollowUpQuestions: nextBreadth,
-                language,
-                aiConfig,
-                signal,
-              })
-              searchResult = {}
+              while (true) {
+                const searchResultGenerator = processSearchResult({
+                  query: plan.query,
+                  searchPlan: plan,
+                  searchProvider: webSearchFunction.provider,
+                  repairExtraction: extractionRetried,
+                  researchGoal: plan.researchGoal,
+                  results,
+                  numFollowUpQuestions: nextBreadth,
+                  language,
+                  aiConfig,
+                  signal,
+                })
+                searchResult = {}
 
-              for await (const chunk of parseStreamingJson(
-                searchResultGenerator.fullStream,
-                searchResultTypeSchema,
-                (value) => Array.isArray(value.learnings),
-              )) {
-                throwIfAborted(signal)
-                if (chunk.type === 'object') {
-                  searchResult = chunk.value
-                  progress({
-                    type: 'processing_search_result',
-                    result: chunk.value,
-                    query: plan.query,
-                    nodeId: searchQuery.nodeId,
-                  })
-                } else if (chunk.type === 'reasoning') {
-                  progress({
-                    type: 'processing_search_result_reasoning',
-                    delta: chunk.delta,
-                    nodeId: searchQuery.nodeId,
-                  })
-                } else if (chunk.type === 'error') {
-                  throw new Error(chunk.message)
-                } else if (chunk.type === 'bad-end') {
-                  throw new Error('Invalid structured output')
+                for await (const chunk of parseStreamingJson(
+                  searchResultGenerator.fullStream,
+                  searchResultTypeSchema,
+                  (value) => Array.isArray(value.learnings),
+                )) {
+                  throwIfAborted(signal)
+                  if (chunk.type === 'object') {
+                    searchResult = chunk.value
+                    progress({
+                      type: 'processing_search_result',
+                      result: chunk.value,
+                      query: plan.query,
+                      nodeId: searchQuery.nodeId,
+                    })
+                  } else if (chunk.type === 'reasoning') {
+                    progress({
+                      type: 'processing_search_result_reasoning',
+                      delta: chunk.delta,
+                      nodeId: searchQuery.nodeId,
+                    })
+                  } else if (chunk.type === 'error') {
+                    throw new Error(chunk.message)
+                  } else if (chunk.type === 'bad-end') {
+                    throw new Error('Invalid structured output')
+                  }
                 }
-              }
 
-              searchResult = searchResultTypeSchema
-                .extend({ relevantUrls: z.array(z.string()) })
-                .parse(searchResult)
-              const relevant = searchResult.relevantUrls
-              searchResult.learnings = finalizeLearningsFromSearchResults(
-                searchResult.learnings,
-                Array.isArray(relevant)
-                  ? results.filter((item) => relevant.includes(item.url))
-                  : results,
-              )
-              // Keep only verified evidence; a plausible but unsupported learning is not a successful search.
-              searchResult.learnings = searchResult.learnings.filter((item) => !!item.evidence)
-              if (searchResult.learnings.length || attempt === 2) break
+                const validated = searchResultTypeSchema
+                  .extend({ relevantUrls: z.array(z.string()) })
+                  .parse(searchResult)
+                const checked = assessSearchLearnings(
+                  validated.learnings,
+                  results,
+                  validated.relevantUrls,
+                  extractionRetried,
+                )
+                assessment = checked.assessment
+                searchResult = { ...validated, learnings: checked.learnings }
+                const needsRepair =
+                  !checked.learnings.length &&
+                  (assessment.reason === 'unmatched_quotes' ||
+                    assessment.reason === 'unmatched_sources')
+                if (!needsRepair || extractionRetried) break
+                extractionRetried = true
+              }
+              if (searchResult.learnings?.length || attempt === 2) break
               const rewrite = searchResult.rewriteQuery?.trim()
               if (
                 !rewrite ||
@@ -598,9 +622,8 @@ export async function deepResearch({
               plan = { ...plan, query: rewrite }
             }
             if (!searchResult.learnings?.length) {
-              throw new Error(
-                'No relevant, verifiable evidence found within the search constraints',
-              )
+              progress({ type: 'no_evidence', assessment: assessment!, nodeId: searchQuery.nodeId })
+              return { learnings: learnings ?? [] }
             }
             const allLearnings = [...(learnings ?? []), ...(searchResult.learnings ?? [])]
             const nextDepth = currentDepth + 1

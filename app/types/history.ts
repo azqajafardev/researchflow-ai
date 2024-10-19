@@ -1,3 +1,4 @@
+import type { SearchAssessment } from '~~/shared/utils/search-assessment'
 import type { SearchPlan, SearchLimitation } from '~~/shared/utils/search-plan'
 import type { ResearchFeedbackResult, ResearchLearning } from '~~/shared/types/research-session'
 
@@ -10,6 +11,7 @@ export type ResearchHistoryNodeStatus =
   | 'processing_search_result'
   | 'processing_search_result_reasoning'
   | 'node_complete'
+  | 'no_evidence'
   | 'error'
 
 export interface ResearchHistoryGraphNode {
@@ -18,6 +20,7 @@ export interface ResearchHistoryGraphNode {
   researchGoal?: string
   searchPlan?: SearchPlan
   searchAttempt?: number
+  searchAssessment?: SearchAssessment
   searchLimitations?: SearchLimitation[]
   generateQueriesReasoning?: string
   generateLearningsReasoning?: string

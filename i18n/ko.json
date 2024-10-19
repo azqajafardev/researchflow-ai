@@ -244,5 +244,18 @@
       "language": "검색 언어"
     },
     "published": "출처 표시 날짜: {date}"
+  },
+  "searchAssessment": {
+    "title": "이번 검색에서 사용 가능한 근거를 찾지 못했습니다",
+    "reasons": {
+      "verified": "사용 가능한 근거를 찾았습니다.",
+      "no_results": "검색 서비스가 사용 가능한 내용을 반환하지 않았습니다. 검색어, 기간 또는 출처 범위를 조정하세요.",
+      "irrelevant": "모델이 검색 결과를 연구 목표 또는 요청한 기간과 관련이 없다고 판단했습니다.",
+      "no_findings": "관련 가능성이 있는 출처를 찾았지만 질문에 답하는 결론을 추출하지 못했습니다.",
+      "unmatched_sources": "추출한 결론을 반환된 관련 출처와 연결하지 못하여 보고서에서 제외했습니다.",
+      "unmatched_quotes": "출처 인용문이 검색 내용과 일치하지 않아 해당 결론을 보고서에서 제외했습니다."
+    },
+    "counts": "최근 검색: 결과 {results}개, 관련 결과 {relevant}개; 결론 {findings}개 추출, {verified}개 검증.",
+    "extractionRetried": "원문 인용문 추출을 다시 시도했습니다."
   }
 }

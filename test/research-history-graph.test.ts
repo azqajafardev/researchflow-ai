@@ -172,3 +172,25 @@ it('round trips search plans, recovery state and source metadata without retaini
     content: '',
   })
 })
+
+it('preserves evidence diagnostics and the non-error empty-result state in history', () => {
+  const assessment = {
+    reason: 'unmatched_quotes' as const,
+    resultsCount: 5,
+    relevantCount: 3,
+    findingsCount: 2,
+    verifiedCount: 0,
+    extractionRetried: true,
+  }
+  const graph = createResearchHistoryGraph([
+    { id: '0', label: 'Start' },
+    { id: '0-0', label: 'A query', status: 'no_evidence', searchAssessment: assessment },
+  ])
+  const restored = restoreResearchHistoryGraph(
+    researchHistoryGraphSchema.parse(JSON.parse(JSON.stringify(graph))),
+  )
+  assert.equal(restored.nodes[1]?.status, 'no_evidence')
+  assert.deepEqual(restored.nodes[1]?.searchAssessment, assessment)
+  assert.equal(restored.flowNodes[1]?.data.status, 'no_evidence')
+  assert.equal(restored.nodes[1]?.error, undefined)
+})
