@@ -7,11 +7,11 @@ export const researchInputLimits = {
 } as const
 
 const requiredText = z.string().trim().min(1)
-const SUPPORTED_LOCALES = ['en', 'zh', 'nl'] as const
+const SUPPORTED_LOCALES = ['en', 'zh', 'nl', 'ko'] as const
 
 /**
  * Browsers/OSes commonly report region-qualified locales such as `en-US`,
- * `zh-CN` or `nl_NL` (e.g. via `navigator.language` or the `Accept-Language`
+ * `zh-CN`, `nl_NL` or `ko-KR` (e.g. via `navigator.language` or the `Accept-Language`
  * header). Normalize these to their base language so requests aren't
  * rejected just because a region suffix is present.
  */

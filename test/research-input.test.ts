@@ -90,6 +90,19 @@ describe('research input validation', () => {
       assert.equal(parsed.data.languageCode, 'en')
       assert.equal(parsed.data.searchLanguageCode, 'zh')
     }
+
+    const korean = researchRequestSchema.safeParse({
+      query: 'topic',
+      breadth: 2,
+      depth: 2,
+      languageCode: 'ko-KR',
+      searchLanguageCode: 'ko',
+    })
+    assert.equal(korean.success, true)
+    if (korean.success) {
+      assert.equal(korean.data.languageCode, 'ko')
+      assert.equal(korean.data.searchLanguageCode, 'ko')
+    }
   })
 
   it('rejects locales that do not map to a supported language', () => {

@@ -2,8 +2,10 @@ const LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
   zh: '中文',
   nl: 'Nederlands',
+  ko: '한국어',
   english: 'English',
   nederlands: 'Nederlands',
+  korean: '한국어',
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
