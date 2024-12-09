@@ -130,5 +130,16 @@
     "dismiss": "Dismiss"
   },
   "fullscreen": "Fullscreen",
-  "exitFullscreen": "Exit fullscreen"
+  "exitFullscreen": "Exit fullscreen",
+  "serverMode": {
+    "title": "Server Mode",
+    "description": "Currently running in server mode. All configurations are provided by the server, no need to set API keys manually.",
+    "loading": "Loading configuration...",
+    "loadFailed": "Failed to load configuration",
+    "aiProvider": "AI Provider",
+    "aiModel": "AI Model",
+    "webSearchProvider": "Web Search Provider",
+    "searchLanguage": "Search Language",
+    "configNotice": "Current configuration is set by the server administrator. Contact the administrator to make changes."
+  }
 }

@@ -13,7 +13,23 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       version: projVersion,
+      serverMode: process.env.NUXT_PUBLIC_SERVER_MODE === 'true',
+      // Server mode configuration - exposed to frontend
+      aiProvider: process.env.NUXT_PUBLIC_AI_PROVIDER || 'openai-compatible',
+      aiModel: process.env.NUXT_PUBLIC_AI_MODEL || 'gpt-4o-mini',
+      aiContextSize: parseInt(process.env.NUXT_PUBLIC_AI_CONTEXT_SIZE || '128000'),
+      webSearchProvider: process.env.NUXT_PUBLIC_WEB_SEARCH_PROVIDER || 'tavily',
+      webSearchConcurrencyLimit: parseInt(process.env.NUXT_PUBLIC_WEB_SEARCH_CONCURRENCY_LIMIT || '2'),
+      webSearchSearchLanguage: process.env.NUXT_PUBLIC_WEB_SEARCH_SEARCH_LANGUAGE || 'en',
+      tavilyAdvancedSearch: process.env.NUXT_PUBLIC_TAVILY_ADVANCED_SEARCH === 'true',
+      tavilySearchTopic: process.env.NUXT_PUBLIC_TAVILY_SEARCH_TOPIC || 'general',
+      googlePseId: process.env.NUXT_PUBLIC_GOOGLE_PSE_ID,
     },
+    // Private server-only configuration
+    aiApiKey: process.env.NUXT_AI_API_KEY,
+    aiApiBase: process.env.NUXT_AI_API_BASE,
+    webSearchApiKey: process.env.NUXT_WEB_SEARCH_API_KEY,
+    webSearchApiBase: process.env.NUXT_WEB_SEARCH_API_BASE,
   },
 
   routeRules: {

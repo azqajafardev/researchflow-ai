@@ -4,7 +4,7 @@
     type PartialProcessedSearchResult,
     type ProcessedSearchResult,
     type ResearchStep,
-  } from '~~/lib/deep-research'
+  } from '~~/lib/core/deep-research'
   import {
     feedbackInjectionKey,
     formInjectionKey,
@@ -15,6 +15,7 @@
   import NodeDetail from './NodeDetail.vue'
   import { isChildNode, isParentNode, isRootNode } from '~/utils/tree-node'
   import { UCard, UModal, UButton } from '#components'
+  import { useServerMode } from '~/composables/useServerMode'
 
   export type DeepResearchNodeStatus = Exclude<ResearchStep['type'], 'complete'>
 
@@ -43,6 +44,7 @@
   const { t, locale } = useI18n()
   const { config } = useConfigStore()
   const isLargeScreen = useMediaQuery('(min-width: 768px)')
+  const { deepResearch: researchFunction } = useServerMode()
 
   const flowRef = ref<InstanceType<typeof Flow>>()
   const rootNode: DeepResearchNode = { id: '0', label: 'Start' }
@@ -267,7 +269,7 @@
           .filter(Boolean)
       }
 
-      await deepResearch({
+      await researchFunction({
         query,
         retryNode,
         currentDepth,

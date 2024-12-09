@@ -129,6 +129,17 @@
     "refresh": "刷新",
     "dismiss": "忽略"
   },
+  "fullscreen": "全屏",
   "exitFullscreen": "退出全屏",
-  "fullscreen": "全屏"
+  "serverMode": {
+    "title": "服务端模式",
+    "description": "当前运行在服务端模式，所有配置由服务器提供，无需手动设置 API 密钥。",
+    "loading": "加载配置中...",
+    "loadFailed": "加载配置失败",
+    "aiProvider": "AI 提供商",
+    "aiModel": "AI 模型",
+    "webSearchProvider": "搜索服务提供商",
+    "searchLanguage": "搜索语言",
+    "configNotice": "当前配置由服务器管理员设置，如需修改请联系管理员。"
+  }
 }

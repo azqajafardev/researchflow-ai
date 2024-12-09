@@ -1,44 +1,6 @@
 import { skipHydrate } from 'pinia'
 import { getApiBase } from '~~/shared/utils/ai-model'
-
-export type ConfigAiProvider =
-  | 'openai-compatible'
-  | 'siliconflow'
-  | '302-ai'
-  | 'infiniai'
-  | 'openrouter'
-  | 'deepseek'
-  | 'ollama'
-
-export type ConfigWebSearchProvider = 'tavily' | 'firecrawl' | 'google-pse'
-
-export interface ConfigAi {
-  provider: ConfigAiProvider
-  apiKey?: string
-  apiBase?: string
-  model: string
-  contextSize?: number
-}
-export interface ConfigWebSearch {
-  provider: ConfigWebSearchProvider
-  apiKey?: string
-  /** API base. Currently only works with Firecrawl */
-  apiBase?: string
-  /** Force the LLM to generate serp queries in a certain language */
-  searchLanguage?: Locale
-  /** Limit the number of concurrent tasks globally */
-  concurrencyLimit?: number
-  /** Tavily: use advanced search to retrieve higher quality results */
-  tavilyAdvancedSearch?: boolean
-  /** Tavily: search topic. Defaults to `general` */
-  tavilySearchTopic?: 'general' | 'news' | 'finance'
-  googlePseId?: string; // Google PSE ID
-}
-
-export interface Config {
-  ai: ConfigAi
-  webSearch: ConfigWebSearch
-}
+import type { Config } from '~~/shared/types/config'
 
 function validateConfig(config: Config) {
   const ai = config.ai
@@ -56,7 +18,23 @@ function validateConfig(config: Config) {
 }
 
 export const useConfigStore = defineStore('config', () => {
-  const config = useLocalStorage<Config>('deep-research-config', {
+  const runtimeConfig = useRuntimeConfig()
+  const isServerMode = computed(() => runtimeConfig.public.serverMode)
+  
+  // Server mode configuration
+  const serverConfig = computed(() => ({
+    aiProvider: runtimeConfig.public.aiProvider,
+    aiModel: runtimeConfig.public.aiModel,
+    aiContextSize: runtimeConfig.public.aiContextSize,
+    webSearchProvider: runtimeConfig.public.webSearchProvider,
+    webSearchConcurrencyLimit: runtimeConfig.public.webSearchConcurrencyLimit,
+    webSearchSearchLanguage: runtimeConfig.public.webSearchSearchLanguage,
+    tavilyAdvancedSearch: runtimeConfig.public.tavilyAdvancedSearch,
+    tavilySearchTopic: runtimeConfig.public.tavilySearchTopic,
+    googlePseId: runtimeConfig.public.googlePseId,
+  }))
+
+  const localConfig = useLocalStorage<Config>('deep-research-config', {
     ai: {
       provider: 'openai-compatible',
       model: '',
@@ -67,15 +45,49 @@ export const useConfigStore = defineStore('config', () => {
       concurrencyLimit: 2,
     },
   } satisfies Config)
+
+  const serverConfigRef = computed(() => ({
+    ai: {
+      provider: serverConfig.value.aiProvider as any,
+      model: serverConfig.value.aiModel,
+      contextSize: serverConfig.value.aiContextSize,
+      apiKey: '******',
+      apiBase: undefined,
+    },
+    webSearch: {
+      provider: serverConfig.value.webSearchProvider as any,
+      concurrencyLimit: serverConfig.value.webSearchConcurrencyLimit,
+      searchLanguage: serverConfig.value.webSearchSearchLanguage as any,
+      tavilyAdvancedSearch: serverConfig.value.tavilyAdvancedSearch,
+      tavilySearchTopic: serverConfig.value.tavilySearchTopic as any,
+      googlePseId: serverConfig.value.googlePseId,
+      apiKey: '******',
+      apiBase: undefined,
+    },
+  } satisfies Config))
+
+  const config = computed(() => {
+    return isServerMode.value ? serverConfigRef.value : localConfig.value
+  })
   // The version user dismissed the update notification
   const dismissUpdateVersion = useLocalStorage<string>(
     'dismiss-update-version',
     '',
   )
-  const isConfigValid = computed(() => validateConfig(config.value))
+  
+  // In server mode, config is always valid since it's handled by the server
+  const isConfigValid = computed(() => {
+    if (isServerMode.value) return true
+    return validateConfig(config.value)
+  })
 
-  const aiApiBase = computed(() => getApiBase(config.value.ai))
+  const aiApiBase = computed(() => {
+    if (isServerMode.value) return '' // Not used in server mode
+    return getApiBase(config.value.ai)
+  })
   const webSearchApiBase = computed(() => {
+    if (isServerMode.value) return '' // Not used in server mode
+    
     const { webSearch } = config.value
     if (webSearch.provider === 'tavily') {
       return
@@ -88,7 +100,7 @@ export const useConfigStore = defineStore('config', () => {
   const showConfigManager = ref(false)
 
   return {
-    config: skipHydrate(config),
+    config: isServerMode.value ? config : skipHydrate(localConfig),
     isConfigValid,
     aiApiBase,
     webSearchApiBase,

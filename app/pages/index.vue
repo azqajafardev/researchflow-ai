@@ -3,12 +3,19 @@
     <UContainer>
       <div class="max-w-4xl mx-auto py-8 flex flex-col gap-y-4">
         <div class="flex flex-col sm:flex-row gap-2">
-          <h1 class="text-3xl font-bold text-center mb-2">
-            Deep Research
-            <span class="text-xs text-gray-400 dark:text-gray-500">
-              v{{ version }}
-            </span>
-          </h1>
+          <div class="flex flex-col sm:flex-row items-center mx-auto sm:ml-0 sm:mr-auto">
+            <h1 class="text-3xl font-bold text-center mb-2 sm:mb-0 flex items-center">
+              Deep Research
+              <div class="inline-flex flex-col items-start ml-2">
+                <span v-if="isServerMode" class="text-xs text-green-600 dark:text-green-400">
+                  {{ $t('serverMode.title') }}
+                </span>
+                <span class="text-xs text-gray-400 dark:text-gray-500">
+                  v{{ version }}
+                </span>
+              </div>
+            </h1>
+          </div>
           <div class="mx-auto sm:ml-auto sm:mr-0 flex items-center gap-2">
             <GitHubButton />
             <ConfigManager ref="configManagerRef" />
@@ -58,14 +65,16 @@
   import type ConfigManager from '@/components/ConfigManager.vue'
   import type { ResearchInputData } from '@/components/ResearchForm.vue'
   import type { ResearchFeedbackResult } from '@/components/ResearchFeedback.vue'
-  import type { ResearchResult } from '~~/lib/deep-research'
+  import type { ResearchResult } from '~~/lib/core/deep-research'
   import {
     feedbackInjectionKey,
     formInjectionKey,
     researchResultInjectionKey,
   } from '@/constants/injection-keys'
 
-  const version = useRuntimeConfig().public.version
+  const runtimeConfig = useRuntimeConfig()
+  const version = runtimeConfig.public.version
+  const isServerMode = runtimeConfig.public.serverMode
 
   const configManagerRef = ref<InstanceType<typeof ConfigManager>>()
   const formRef = ref<InstanceType<typeof ResearchForm>>()

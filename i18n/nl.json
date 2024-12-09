@@ -126,5 +126,16 @@
     "dismiss": "Afwijzen"
   },
   "exitFullscreen": "Volledig scherm verlaten",
-  "fullscreen": "Volledig scherm"
+  "fullscreen": "Volledig scherm",
+  "serverMode": {
+    "title": "Servermodus",
+    "description": "Momenteel draait in servermodus. Alle configuraties worden door de server geleverd, geen handmatige API-sleutels nodig.",
+    "loading": "Configuratie laden...",
+    "loadFailed": "Configuratie laden mislukt",
+    "aiProvider": "AI-provider",
+    "aiModel": "AI-model",
+    "webSearchProvider": "Zoekmachine provider",
+    "searchLanguage": "Zoektaal",
+    "configNotice": "Huidige configuratie is ingesteld door de serverbeheerder. Neem contact op met de beheerder voor wijzigingen."
+  }
 }

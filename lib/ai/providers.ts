@@ -12,7 +12,7 @@ export function trimPrompt(prompt: string, contextSize?: number) {
   }
 
   if (!contextSize) {
-    contextSize = useConfigStore().config.ai.contextSize || 128_000
+    contextSize = 128_000
   }
 
   const length = encoder.encode(prompt).length

@@ -1,15 +1,16 @@
 <script setup lang="ts">
   import { marked } from 'marked'
-  import { writeFinalReport } from '~~/lib/deep-research'
   import {
     feedbackInjectionKey,
     formInjectionKey,
     researchResultInjectionKey,
   } from '~/constants/injection-keys'
+  import { useServerMode } from '~/composables/useServerMode'
 
   const { t, locale } = useI18n()
   const { config } = storeToRefs(useConfigStore())
   const toast = useToast()
+  const { writeFinalReport: reportFunction } = useServerMode()
 
   const error = ref('')
   const loading = ref(false)
@@ -153,7 +154,7 @@
       // Store a copy of the data
       const learnings = [...researchResult.value.learnings]
       console.log(`[generateReport] Generating report. Learnings:`, learnings)
-      const { fullStream } = writeFinalReport({
+      const { fullStream } = await reportFunction({
         prompt: getCombinedQuery(form.value, feedback.value),
         language: t('language', {}, { locale: locale.value }),
         learnings,

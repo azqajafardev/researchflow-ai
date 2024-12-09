@@ -3,7 +3,7 @@
     feedbackInjectionKey,
     formInjectionKey,
   } from '~/constants/injection-keys'
-  import { generateFeedback } from '~~/lib/feedback'
+  import { useServerMode } from '~/composables/useServerMode'
 
   export interface ResearchFeedbackResult {
     assistantQuestion: string
@@ -20,7 +20,10 @@
 
   const { t, locale } = useI18n()
   const { showConfigManager, isConfigValid, config } = storeToRefs(useConfigStore())
+  const runtimeConfig = useRuntimeConfig()
+  const isServerMode = computed(() => runtimeConfig.public.serverMode)
   const toast = useToast()
+  const { generateFeedback: feedbackFunction } = useServerMode()
 
   const reasoningContent = ref('')
   const isLoading = ref(false)
@@ -41,7 +44,7 @@
   )
 
   async function getFeedback() {
-    if (!isConfigValid.value) {
+    if (!isConfigValid.value && !isServerMode.value) {
       toast.add({
         title: t('index.missingConfigTitle'),
         description: t('index.missingConfigDescription'),
@@ -53,19 +56,21 @@
     clear()
     isLoading.value = true
     try {
-      for await (const f of generateFeedback({
+      const chunks = await feedbackFunction({
         query: form.value.query,
         numQuestions: form.value.numQuestions,
         language: t('language', {}, { locale: locale.value }),
         aiConfig: config.value.ai,
-      })) {
-        if (f.type === 'reasoning') {
-          reasoningContent.value += f.delta
-        } else if (f.type === 'error') {
-          error.value = f.message
-        } else if (f.type === 'object') {
-          const questions = f.value.questions!.filter(
-            (s) => typeof s === 'string',
+      })
+      
+      for await (const chunk of chunks) {
+        if (chunk.type === 'reasoning') {
+          reasoningContent.value += chunk.delta
+        } else if (chunk.type === 'error') {
+          error.value = chunk.message
+        } else if (chunk.type === 'object') {
+          const questions = chunk.value.questions!.filter(
+            (s: any) => typeof s === 'string',
           )
           // Incrementally update modelValue
           for (let i = 0; i < questions.length; i += 1) {
@@ -78,7 +83,7 @@
               })
             }
           }
-        } else if (f.type === 'bad-end') {
+        } else if (chunk.type === 'bad-end') {
           error.value = t('invalidStructuredOutput')
         }
       }

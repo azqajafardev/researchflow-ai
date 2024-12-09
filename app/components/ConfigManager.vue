@@ -15,6 +15,22 @@
     showConfigManager: showModal,
   } = storeToRefs(useConfigStore())
   const { t } = useI18n()
+  const runtimeConfig = useRuntimeConfig()
+  const isServerMode = computed(() => runtimeConfig.public.serverMode)
+
+  // Server mode configuration
+  const serverConfig = computed(() => ({
+    aiProvider: runtimeConfig.public.aiProvider,
+    aiModel: runtimeConfig.public.aiModel,
+    aiContextSize: runtimeConfig.public.aiContextSize,
+    webSearchProvider: runtimeConfig.public.webSearchProvider,
+    webSearchConcurrencyLimit: runtimeConfig.public.webSearchConcurrencyLimit,
+    webSearchSearchLanguage: runtimeConfig.public.webSearchSearchLanguage,
+    tavilyAdvancedSearch: runtimeConfig.public.tavilyAdvancedSearch,
+    tavilySearchTopic: runtimeConfig.public.tavilySearchTopic,
+    googlePseId: runtimeConfig.public.googlePseId,
+  }))
+
 
   const loadingAiModels = ref(false)
   const aiModelOptions = ref<string[]>([])
@@ -123,7 +139,7 @@
 
     try {
       loadingAiModels.value = true
-      const result: OpenAICompatibleModelsResponse = await $fetch(
+      const result = await $fetch<OpenAICompatibleModelsResponse>(
         `${aiApiBase.value}/models`,
         {
           headers: {
@@ -169,7 +185,7 @@
       showModal.value,
     ],
     () => {
-      if (!showModal.value) return
+      if (!showModal.value || isServerMode.value) return
       debouncedListAiModels()
     },
     { immediate: true },
@@ -178,6 +194,7 @@
   watch(
     () => config.value.ai.provider,
     () => {
+      if (isServerMode.value) return
       config.value.ai.apiKey = ''
       config.value.ai.apiBase = ''
       config.value.ai.model = ''
@@ -190,6 +207,7 @@
   watch(
     () => config.value.webSearch.provider,
     () => {
+      if (isServerMode.value) return
       config.value.webSearch.apiKey = ''
       config.value.webSearch.apiBase = ''
     },
@@ -241,6 +259,7 @@
                   v-model="config.ai.provider"
                   class="w-full"
                   :items="aiProviderOptions"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField
@@ -251,6 +270,7 @@
                   v-model="config.ai.apiKey"
                   class="w-full"
                   :placeholder="$t('settings.ai.apiKey')"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField :label="$t('settings.ai.apiBase')">
@@ -258,11 +278,12 @@
                   v-model="config.ai.apiBase"
                   class="w-full"
                   :placeholder="aiApiBase"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField :label="$t('settings.ai.model')" required>
                 <UInputMenu
-                  v-if="aiModelOptions.length && !isLoadAiModelsFailed"
+                  v-if="aiModelOptions.length && !isLoadAiModelsFailed && !isServerMode"
                   v-model="config.ai.model"
                   class="w-full"
                   :items="aiModelOptions"
@@ -270,12 +291,14 @@
                   :loading="loadingAiModels"
                   create-item
                   @create="createAndSelectAiModel"
+                  :disabled="isServerMode"
                 />
                 <UInput
                   v-else
                   v-model="config.ai.model"
                   class="w-full"
                   :placeholder="$t('settings.ai.model')"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField :label="$t('settings.ai.contextSize')">
@@ -288,6 +311,7 @@
                   type="number"
                   placeholder="128000"
                   :min="512"
+                  :disabled="isServerMode"
                 />
                 tokens
               </UFormField>
@@ -318,6 +342,7 @@
                   v-model="config.webSearch.provider"
                   class="w-full"
                   :items="webSearchProviderOptions"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField
@@ -328,6 +353,7 @@
                   v-model="config.webSearch.apiKey"
                   class="w-full"
                   :placeholder="$t('settings.webSearch.apiKey')"
+                  :disabled="isServerMode"
                 />
               </UFormField>
 
@@ -346,6 +372,7 @@
                         'settings.webSearch.providers.google-pse.pseIdPlaceholder',
                       )
                     "
+                    :disabled="isServerMode"
                   />
                 </UFormField>
               </template>
@@ -358,6 +385,7 @@
                   v-model="config.webSearch.apiBase"
                   class="w-full"
                   :placeholder="webSearchApiBase"
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField :label="$t('settings.webSearch.queryLanguage')">
@@ -372,6 +400,7 @@
                   :value="config.webSearch.searchLanguage"
                   @update="config.webSearch.searchLanguage = $event"
                   private
+                  :disabled="isServerMode"
                 />
               </UFormField>
               <UFormField :label="$t('settings.webSearch.concurrencyLimit')">
@@ -386,6 +415,7 @@
                   :min="1"
                   :max="5"
                   :step="1"
+                  :disabled="isServerMode"
                 />
               </UFormField>
 
@@ -399,7 +429,10 @@
                     $t('settings.webSearch.providers.tavily.advancedSearchHelp')
                   "
                 >
-                  <USwitch v-model="config.webSearch.tavilyAdvancedSearch" />
+                  <USwitch
+                    v-model="config.webSearch.tavilyAdvancedSearch"
+                    :disabled="isServerMode"
+                  />
                 </UFormField>
                 <UFormField
                   :label="$t('settings.webSearch.providers.tavily.searchTopic')"
@@ -412,6 +445,7 @@
                     class="w-30"
                     :items="tavilySearchTopicOptions"
                     placeholder="general"
+                    :disabled="isServerMode"
                   />
                 </UFormField>
               </template>
@@ -423,9 +457,10 @@
       <template #footer>
         <div class="flex items-center justify-between gap-2 w-full">
           <p class="text-sm text-gray-500">
-            {{ $t('settings.disclaimer') }}
+            {{ isServerMode ? $t('serverMode.configNotice') : $t('settings.disclaimer') }}
           </p>
           <UButton
+            v-if="!isServerMode"
             color="primary"
             icon="i-lucide-check"
             @click="showModal = false"

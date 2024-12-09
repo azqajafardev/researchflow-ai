@@ -2,7 +2,7 @@ import { streamText } from 'ai'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 
-import { languagePrompt, systemPrompt } from './prompt'
+import { languagePrompt, systemPrompt } from '../prompt'
 import { parseStreamingJson, type DeepPartial } from '~~/shared/utils/json'
 import { throwAiError } from '~~/shared/utils/errors'
 import { getLanguageModel } from '~~/shared/utils/ai-model'

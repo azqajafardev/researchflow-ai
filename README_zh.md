@@ -9,6 +9,7 @@
 - 🌳 **搜索可视化**：使用树状结构展示研究过程，支持使用英文搜索词
 - 📄 **支持导出 PDF**：将最终研究报告导出为 Markdown 和 PDF 格式
 - 🤖 **多模型支持**：底层使用纯提示词而非结构化输出等新特性，兼容更多大模型供应商
+- 🔧 **服务端模式**：通过环境变量部署，用户无需配置 API 密钥
 
 当前支持的供应商：
 
@@ -20,6 +21,10 @@
 <video width="500" src="https://github.com/user-attachments/assets/8f9baa43-a74e-4613-aebb-1bcc29a686f0" controls></video>
 
 ## 近期更新
+
+25/07/23
+
+- 新增：服务端模式 - 通过环境变量部署，用户无需配置 API 密钥
 
 25/06/26
 
@@ -102,6 +107,28 @@
 
 ### 自托管部署
 
+#### 服务端模式（推荐）
+通过环境变量部署，用户无需配置 API 密钥：
+
+```bash
+# 复制并配置环境变量
+cp .env.example .env
+# 编辑 .env 填入你的 API 密钥和配置
+
+# Docker 部署
+docker run -p 3000:3000 \
+  -e NUXT_PUBLIC_SERVER_MODE=true \
+  -e NUXT_AI_API_KEY=你的AI-API密钥 \
+  -e NUXT_WEB_SEARCH_API_KEY=你的搜索API密钥 \
+  -e NUXT_PUBLIC_AI_PROVIDER=openai-compatible \
+  -e NUXT_PUBLIC_AI_MODEL=gpt-4o-mini \
+  -e NUXT_PUBLIC_WEB_SEARCH_PROVIDER=tavily \
+  anotia/deep-research-web:latest
+```
+
+#### 客户端模式（传统）
+用户需要在浏览器中自行配置 API 密钥：
+
 使用 [EdgeOne Pages](https://edgeone.ai/products/pages) 一键部署：
 
 [![Deploy with EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?from=github&template=https://github.com/AnotiaWang/deep-research-web-ui&from=github)
@@ -120,6 +147,30 @@ cd deep-research-web-ui
 docker build -t deep-research-web .
 docker run -p 3000:3000 --name deep-research-web -d deep-research-web
 ```
+
+### 环境变量配置
+
+#### 服务端模式配置
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `NUXT_PUBLIC_SERVER_MODE` | 启用服务端模式 | `false` |
+| `NUXT_AI_API_KEY` | AI 服务商 API 密钥 | - |
+| `NUXT_AI_API_BASE` | AI 服务商基础 URL | - |
+| `NUXT_WEB_SEARCH_API_KEY` | 联网搜索 API 密钥 | - |
+| `NUXT_WEB_SEARCH_API_BASE` | 联网搜索基础 URL | - |
+
+#### 公共配置（服务端模式）
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `NUXT_PUBLIC_AI_PROVIDER` | AI 服务商类型 | `openai-compatible` |
+| `NUXT_PUBLIC_AI_MODEL` | AI 模型名称 | `gpt-4o-mini` |
+| `NUXT_PUBLIC_AI_CONTEXT_SIZE` | 上下文大小 | `128000` |
+| `NUXT_PUBLIC_WEB_SEARCH_PROVIDER` | 搜索服务商 | `tavily` |
+| `NUXT_PUBLIC_WEB_SEARCH_CONCURRENCY_LIMIT` | 最大并发数 | `2` |
+| `NUXT_PUBLIC_WEB_SEARCH_SEARCH_LANGUAGE` | 搜索语言 | `en` |
+| `NUXT_PUBLIC_TAVILY_ADVANCED_SEARCH` | 使用 Tavily 高级搜索 | `false` |
+| `NUXT_PUBLIC_TAVILY_SEARCH_TOPIC` | Tavily 搜索主题 | `general` |
+| `NUXT_PUBLIC_GOOGLE_PSE_ID` | Google PSE ID | - |
 
 ---
 

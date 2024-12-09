@@ -2,10 +2,9 @@ import { streamText } from 'ai'
 import { z } from 'zod'
 import { parseStreamingJson, type DeepPartial } from '~~/shared/utils/json'
 
-import { trimPrompt } from './ai/providers'
-import { languagePrompt, systemPrompt } from './prompt'
+import { trimPrompt } from '../ai/providers'
+import { languagePrompt, systemPrompt } from '../prompt'
 import zodToJsonSchema from 'zod-to-json-schema'
-import type { DeepResearchNode } from '@/components/DeepResearch/DeepResearch.vue'
 import { throwAiError } from '~~/shared/utils/errors'
 
 export type ResearchResult = {
@@ -183,7 +182,7 @@ function processSearchResult({
       ),
   })
   const jsonSchema = JSON.stringify(zodToJsonSchema(schema))
-  const contents = results.map((item) => trimPrompt(item.content))
+  const contents = results.map((item) => trimPrompt(item.content, aiConfig.contextSize))
   const prompt = [
     `Given the following contents from a SERP search for the query <query>${query}</query>, extract ${numLearnings} key learnings from the contents. Make sure each learning is unique and not similar to each other. The learnings should be as detailed and information dense as possible. Include any entities like people, places, companies, products, things, etc in the learnings, as well as any exact metrics, numbers, or dates. Also generate up to ${numFollowUpQuestions} follow-up questions that could help explore this topic further.`,
     `<contents>${contents
@@ -221,6 +220,7 @@ ${learning.learning}
 </learning>`,
       )
       .join('\n'),
+    aiConfig.contextSize,
   )
   const _prompt = [
     `Given the following prompt from the user, write a final report on the topic using the learnings from research. Make it as detailed as possible, aim for 3 or more pages, include ALL the key insights from research.`,
@@ -258,6 +258,8 @@ export async function deepResearch({
   currentDepth,
   nodeId = '0',
   retryNode,
+  webSearchFunction,
+  pLimitInstance,
 }: {
   query: string
   breadth: number
@@ -274,15 +276,21 @@ export async function deepResearch({
   /** Current node ID. Used for recursive calls */
   nodeId?: string
   /** The Node ID to retry. Passed from DeepResearch.vue */
-  retryNode?: DeepResearchNode
+  retryNode?: any
   onProgress: (step: ResearchStep) => void
-}): Promise<ResearchResult> {
-  const { t } = useNuxtApp().$i18n
-  const language = t('language', {}, { locale: languageCode })
+  webSearchFunction: (query: string, options: { maxResults?: number; lang?: string }) => Promise<WebSearchResult[]>
+  pLimitInstance?: any
+}) {
+  const language = languageCode
   const searchLanguage = searchLanguageCode
-    ? t('language', {}, { locale: searchLanguageCode })
-    : undefined
-  const globalLimit = usePLimit()
+  
+  // Use provided pLimit or create a simple one if not provided
+  const limit = pLimitInstance || {
+    async (fn: () => Promise<any>) {
+      return fn()
+    },
+    concurrency: 2
+  }
 
   try {
     let searchQueries: Array<PartialSearchQuery & { nodeId: string }> = []
@@ -349,7 +357,7 @@ export async function deepResearch({
         } else if (chunk.type === 'bad-end') {
           onProgress({
             type: 'error',
-            message: t('invalidStructuredOutput'),
+            message: 'Invalid structured output',
             nodeId,
           })
           break
@@ -374,7 +382,7 @@ export async function deepResearch({
     // Run in parallel and limit the concurrency
     const results = await Promise.all(
       searchQueries.map((searchQuery) =>
-        globalLimit(async () => {
+        limit(async () => {
           if (!searchQuery?.query) {
             return {
               learnings: [],
@@ -387,12 +395,12 @@ export async function deepResearch({
           })
           try {
             // search the web
-            const results = await useWebSearch()(searchQuery.query, {
+            const results = await webSearchFunction(searchQuery.query, {
               maxResults: 5,
               lang: languageCode,
             })
             if (!results.length) {
-              throw new Error(t('webBrowsing.noSearchResult'))
+              throw new Error('No search results found')
             }
             console.log(
               `[DeepResearch] Searched "${searchQuery.query}", found ${results.length} contents`,
@@ -444,7 +452,7 @@ export async function deepResearch({
               } else if (chunk.type === 'bad-end') {
                 onProgress({
                   type: 'error',
-                  message: t('invalidStructuredOutput'),
+                  message: 'Invalid structured output',
                   nodeId: searchQuery.nodeId,
                 })
                 break
@@ -492,7 +500,7 @@ export async function deepResearch({
             `.trim()
 
               // Add concurrency by 1, and do next recursive search
-              globalLimit.concurrency++
+              limit.concurrency++
               try {
                 const r = await deepResearch({
                   query: nextQuery,
@@ -504,12 +512,14 @@ export async function deepResearch({
                   nodeId: searchQuery.nodeId,
                   languageCode,
                   aiConfig,
+                  webSearchFunction,
+                  pLimitInstance: limit,
                 })
                 return r
               } catch (error) {
                 throw error
               } finally {
-                globalLimit.concurrency--
+                limit.concurrency--
               }
             } else {
               return {

@@ -12,6 +12,7 @@ Features:
 - 📄 **Export as PDF**: Export the final research report as Markdown / PDF
 - 🤖 **Supports more models**: Uses plain prompts instead of newer, less widely supported features like Structured Outputs. This ensures to work with more providers that haven't caught up with the latest OpenAI capabilities.
 - 🐳 **Docker support**: Deploy in your environment in one-line command
+- 🔧 **Server Mode**: Deploy with environment variables, no need for users to configure API keys
 
 Currently available providers:
 
@@ -35,6 +36,10 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 <video width="500" src="https://github.com/user-attachments/assets/8f9baa43-a74e-4613-aebb-1bcc29a686f0" controls></video>
 
 ## Recent updates
+
+25/07/23
+
+- Added: Server Mode - Deploy with environment variables, users don't need to configure API keys
 
 25/06/26
 
@@ -117,6 +122,28 @@ Live demo: <a href="https://deep-research.ataw.top" target="_blank">https://deep
 
 ### Self hosted
 
+#### Server Mode (Recommended)
+Deploy with environment variables - users don't need to configure API keys:
+
+```bash
+# Copy and configure environment variables
+cp .env.example .env
+# Edit .env with your API keys and settings
+
+# Docker deployment
+docker run -p 3000:3000 \
+  -e NUXT_PUBLIC_SERVER_MODE=true \
+  -e NUXT_AI_API_KEY=your-ai-api-key \
+  -e NUXT_WEB_SEARCH_API_KEY=your-search-api-key \
+  -e NUXT_PUBLIC_AI_PROVIDER=openai-compatible \
+  -e NUXT_PUBLIC_AI_MODEL=gpt-4o-mini \
+  -e NUXT_PUBLIC_WEB_SEARCH_PROVIDER=tavily \
+  anotia/deep-research-web:latest
+```
+
+#### Client Mode (Traditional)
+Users configure their own API keys in the browser:
+
 One-click deploy with [EdgeOne Pages](https://edgeone.ai/products/pages):
 
 [![Deploy with EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?from=github&template=https://github.com/AnotiaWang/deep-research-web-ui&from=github)
@@ -135,6 +162,30 @@ cd deep-research-web-ui
 docker build -t deep-research-web .
 docker run -p 3000:3000 --name deep-research-web -d deep-research-web
 ```
+
+### Environment Variables
+
+#### Server Mode Configuration
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NUXT_PUBLIC_SERVER_MODE` | Enable server mode | `false` |
+| `NUXT_AI_API_KEY` | AI provider API key | - |
+| `NUXT_AI_API_BASE` | AI provider base URL | - |
+| `NUXT_WEB_SEARCH_API_KEY` | Web search API key | - |
+| `NUXT_WEB_SEARCH_API_BASE` | Web search base URL | - |
+
+#### Public Configuration (Server Mode)
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NUXT_PUBLIC_AI_PROVIDER` | AI provider type | `openai-compatible` |
+| `NUXT_PUBLIC_AI_MODEL` | AI model name | `gpt-4o-mini` |
+| `NUXT_PUBLIC_AI_CONTEXT_SIZE` | Context size | `128000` |
+| `NUXT_PUBLIC_WEB_SEARCH_PROVIDER` | Search provider | `tavily` |
+| `NUXT_PUBLIC_WEB_SEARCH_CONCURRENCY_LIMIT` | Max concurrency | `2` |
+| `NUXT_PUBLIC_WEB_SEARCH_SEARCH_LANGUAGE` | Search language | `en` |
+| `NUXT_PUBLIC_TAVILY_ADVANCED_SEARCH` | Use Tavily advanced search | `false` |
+| `NUXT_PUBLIC_TAVILY_SEARCH_TOPIC` | Tavily search topic | `general` |
+| `NUXT_PUBLIC_GOOGLE_PSE_ID` | Google PSE ID | - |
 
 ---
 
