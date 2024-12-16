@@ -22,21 +22,6 @@ abstract class TextSplitter implements TextSplitterParams {
 
   abstract splitText(text: string): string[]
 
-  createDocuments(texts: string[]): string[] {
-    const documents: string[] = []
-    for (let i = 0; i < texts.length; i += 1) {
-      const text = texts[i]
-      for (const chunk of this.splitText(text!)) {
-        documents.push(chunk)
-      }
-    }
-    return documents
-  }
-
-  splitDocuments(documents: string[]): string[] {
-    return this.createDocuments(documents)
-  }
-
   private joinDocs(docs: string[], separator: string): string | null {
     const text = docs.join(separator).trim()
     return text === '' ? null : text

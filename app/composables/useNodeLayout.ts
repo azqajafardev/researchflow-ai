@@ -11,7 +11,6 @@ export function useNodeLayout() {
 
     dagreGraph.setDefaultEdgeLabel(() => ({}))
 
-    const isHorizontal = true
     dagreGraph.setGraph({
       rankdir: 'LR',
       // distance between nodes at the same level
@@ -51,8 +50,8 @@ export function useNodeLayout() {
 
       return {
         ...node,
-        targetPosition: isHorizontal ? Position.Left : Position.Top,
-        sourcePosition: isHorizontal ? Position.Right : Position.Bottom,
+        targetPosition: Position.Left,
+        sourcePosition: Position.Right,
         position: { x: nodeWithPosition.x, y: nodeWithPosition.y },
       }
     })

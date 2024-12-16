@@ -16,10 +16,6 @@ export function parentNodeId(nodeId: string) {
   return segments.slice(0, -1).join('-')
 }
 
-export function nodeIndex(nodeId: string) {
-  return parseInt(nodeId.split('-').pop()!)
-}
-
 export function nodeDepth(nodeId: string) {
   return nodeId.split('-').length
 }
