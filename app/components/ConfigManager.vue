@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { isAiApiKeyRequired } from '~~/shared/utils/ai-model'
+
   interface OpenAICompatibleModel {
     id: string
     object: string
@@ -83,6 +85,12 @@
       label: 'Ollama',
       value: 'ollama',
     },
+    {
+      label: 'LiteLLM',
+      value: 'litellm',
+      link: 'https://docs.litellm.ai/docs/',
+      linkText: 'docs.litellm.ai',
+    },
   ])
   const webSearchProviderOptions = computed(() => [
     {
@@ -122,6 +130,7 @@
   const selectedAiProvider = computed(() =>
     aiProviderOptions.value.find((o) => o.value === config.value.ai.provider),
   )
+  const aiApiKeyRequired = computed(() => isAiApiKeyRequired(config.value.ai.provider))
   const selectedWebSearchProvider = computed(() =>
     webSearchProviderOptions.value.find((o) => o.value === config.value.webSearch.provider),
   )
@@ -220,8 +229,13 @@
           <template #ai>
             <div class="flex flex-col gap-y-2 mb-2">
               <UFormField>
-                <template v-if="selectedAiProvider?.help" #help>
-                  <i18n-t class="whitespace-pre-wrap" :keypath="selectedAiProvider.help" tag="span">
+                <template v-if="selectedAiProvider?.help || selectedAiProvider?.link" #help>
+                  <i18n-t
+                    v-if="selectedAiProvider.help"
+                    class="whitespace-pre-wrap"
+                    :keypath="selectedAiProvider.help"
+                    tag="span"
+                  >
                     <UButton
                       v-if="selectedAiProvider.link"
                       class="!p-0"
@@ -232,6 +246,15 @@
                       {{ selectedAiProvider.linkText || selectedAiProvider.link }}
                     </UButton>
                   </i18n-t>
+                  <UButton
+                    v-else-if="selectedAiProvider.link"
+                    class="!p-0"
+                    :to="selectedAiProvider.link"
+                    target="_blank"
+                    variant="link"
+                  >
+                    {{ selectedAiProvider.linkText || selectedAiProvider.link }}
+                  </UButton>
                 </template>
                 <USelect
                   v-model="config.ai.provider"
@@ -240,10 +263,7 @@
                   :disabled="isServerMode"
                 />
               </UFormField>
-              <UFormField
-                :label="$t('settings.ai.apiKey')"
-                :required="config.ai.provider !== 'ollama'"
-              >
+              <UFormField :label="$t('settings.ai.apiKey')" :required="aiApiKeyRequired">
                 <PasswordInput
                   v-model="config.ai.apiKey"
                   class="w-full"

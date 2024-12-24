@@ -1,11 +1,11 @@
 import { skipHydrate } from 'pinia'
-import { getApiBase } from '~~/shared/utils/ai-model'
+import { getApiBase, isAiApiKeyRequired } from '~~/shared/utils/ai-model'
 import { resolveWebSearchApiBase } from '~~/lib/core/web-search'
 import type { Config } from '~~/shared/types/config'
 
 function validateConfig(config: Config) {
   const ai = config.ai
-  if (ai.provider !== 'ollama' && !ai.apiKey) return false
+  if (isAiApiKeyRequired(ai.provider) && !ai.apiKey) return false
   if (typeof ai.contextSize !== 'undefined' && ai.contextSize < 0) return false
 
   const ws = config.webSearch
