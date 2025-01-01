@@ -76,8 +76,23 @@ export default defineNuxtConfig({
     compressPublicAssets: { brotli: true, gzip: true },
   },
 
+  typescript: {
+    // Customize app/server TypeScript config
+    tsConfig: {
+      compilerOptions: {
+        strict: true,
+      },
+    },
+    // Customize build-time TypeScript config
+    nodeTsConfig: {
+      compilerOptions: {
+        strict: true,
+      },
+    },
+  },
+
   css: ['~/assets/css/main.css'],
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2025-07-29',
   future: {
     compatibilityVersion: 4,
   },
