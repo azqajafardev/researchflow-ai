@@ -272,6 +272,7 @@
         retryNode,
         currentDepth,
         breadth,
+        aiConfig: config.ai,
         maxDepth: form.value.depth,
         languageCode: locale.value,
         searchLanguageCode: config.webSearch.searchLanguage,

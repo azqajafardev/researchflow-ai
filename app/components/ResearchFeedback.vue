@@ -19,7 +19,7 @@
   }>()
 
   const { t, locale } = useI18n()
-  const { showConfigManager, isConfigValid } = storeToRefs(useConfigStore())
+  const { showConfigManager, isConfigValid, config } = storeToRefs(useConfigStore())
   const toast = useToast()
 
   const reasoningContent = ref('')
@@ -57,6 +57,7 @@
         query: form.value.query,
         numQuestions: form.value.numQuestions,
         language: t('language', {}, { locale: locale.value }),
+        aiConfig: config.value.ai,
       })) {
         if (f.type === 'reasoning') {
           reasoningContent.value += f.delta

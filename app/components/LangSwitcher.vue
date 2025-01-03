@@ -1,9 +1,6 @@
 <script setup lang="ts">
   const { locale: globalLocale, availableLocales, t, setLocale } = useI18n()
 
-  export type Locale = (typeof globalLocale)['value']
-  export type AvailableLocales = Locale[]
-
   const props = defineProps<{
     /** Override display locale */
     value?: Locale

@@ -1,5 +1,5 @@
 import { skipHydrate } from 'pinia'
-import type { Locale } from '@/components/LangSwitcher.vue'
+import { getApiBase } from '~~/shared/utils/ai-model'
 
 export type ConfigAiProvider =
   | 'openai-compatible'
@@ -71,25 +71,7 @@ export const useConfigStore = defineStore('config', () => {
   )
   const isConfigValid = computed(() => validateConfig(config.value))
 
-  const aiApiBase = computed(() => {
-    const { ai } = config.value
-    if (ai.provider === 'openrouter') {
-      return ai.apiBase || 'https://openrouter.ai/api/v1'
-    }
-    if (ai.provider === 'deepseek') {
-      return ai.apiBase || 'https://api.deepseek.com/v1'
-    }
-    if (ai.provider === 'ollama') {
-      return ai.apiBase || 'http://localhost:11434/v1'
-    }
-    if (ai.provider === 'siliconflow') {
-      return ai.apiBase || 'https://api.siliconflow.cn/v1'
-    }
-    if (ai.provider === 'infiniai') {
-      return ai.apiBase || 'https://cloud.infini-ai.com/maas/v1'
-    }
-    return ai.apiBase || 'https://api.openai.com/v1'
-  })
+  const aiApiBase = computed(() => getApiBase(config.value.ai))
   const webSearchApiBase = computed(() => {
     const { webSearch } = config.value
     if (webSearch.provider === 'tavily') {

@@ -8,6 +8,7 @@
   } from '~/constants/injection-keys'
 
   const { t, locale } = useI18n()
+  const { config } = storeToRefs(useConfigStore())
   const toast = useToast()
 
   const error = ref('')
@@ -156,6 +157,7 @@
         prompt: getCombinedQuery(form.value, feedback.value),
         language: t('language', {}, { locale: locale.value }),
         learnings,
+        aiConfig: config.value.ai,
       })
       for await (const chunk of fullStream) {
         if (chunk.type === 'reasoning') {

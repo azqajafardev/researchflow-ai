@@ -1,14 +1,12 @@
 import { streamText } from 'ai'
 import { z } from 'zod'
-import { parseStreamingJson, type DeepPartial } from '~~/utils/json'
+import { parseStreamingJson, type DeepPartial } from '~~/shared/utils/json'
 
 import { trimPrompt } from './ai/providers'
 import { languagePrompt, systemPrompt } from './prompt'
 import zodToJsonSchema from 'zod-to-json-schema'
-import { useAiModel } from '@/composables/useAiProvider'
-import type { Locale } from '@/components/LangSwitcher.vue'
 import type { DeepResearchNode } from '@/components/DeepResearch/DeepResearch.vue'
-import { throwAiError } from '~~/utils/errors'
+import { throwAiError } from '~~/shared/utils/errors'
 
 export type ResearchResult = {
   learnings: ProcessedSearchResult['learnings']
@@ -18,6 +16,7 @@ export interface WriteFinalReportParams {
   prompt: string
   learnings: ProcessedSearchResult['learnings']
   language: string
+  aiConfig: ConfigAi
 }
 
 // Used for streaming response
@@ -28,36 +27,36 @@ export type PartialProcessedSearchResult = DeepPartial<ProcessedSearchResult>
 
 export type ResearchStep =
   | {
-      type: 'generating_query'
-      result: PartialSearchQuery
-      nodeId: string
-      parentNodeId?: string
-    }
+    type: 'generating_query'
+    result: PartialSearchQuery
+    nodeId: string
+    parentNodeId?: string
+  }
   | { type: 'generating_query_reasoning'; delta: string; nodeId: string }
   | {
-      type: 'generated_query'
-      query: string
-      result: PartialSearchQuery
-      nodeId: string
-    }
+    type: 'generated_query'
+    query: string
+    result: PartialSearchQuery
+    nodeId: string
+  }
   | { type: 'searching'; query: string; nodeId: string }
   | { type: 'search_complete'; results: WebSearchResult[]; nodeId: string }
   | {
-      type: 'processing_serach_result'
-      query: string
-      result: PartialProcessedSearchResult
-      nodeId: string
-    }
+    type: 'processing_serach_result'
+    query: string
+    result: PartialProcessedSearchResult
+    nodeId: string
+  }
   | {
-      type: 'processing_serach_result_reasoning'
-      delta: string
-      nodeId: string
-    }
+    type: 'processing_serach_result_reasoning'
+    delta: string
+    nodeId: string
+  }
   | {
-      type: 'node_complete'
-      result?: ProcessedSearchResult
-      nodeId: string
-    }
+    type: 'node_complete'
+    result?: ProcessedSearchResult
+    nodeId: string
+  }
   | { type: 'error'; message: string; nodeId: string }
   | { type: 'complete'; learnings: ProcessedSearchResult['learnings'] }
 
@@ -80,6 +79,7 @@ export function generateSearchQueries({
   learnings,
   language,
   searchLanguage,
+  aiConfig,
 }: {
   query: string
   language: string
@@ -88,6 +88,7 @@ export function generateSearchQueries({
   learnings?: string[]
   /** Force the LLM to generate serp queries in a certain language */
   searchLanguage?: string
+  aiConfig: ConfigAi
 }) {
   const schema = z.object({
     queries: z
@@ -115,14 +116,14 @@ export function generateSearchQueries({
     `Given the following prompt from the user, generate a list of highly effective Google search queries to research the topic. Return a maximum of ${numQueries} queries, but feel free to return less if the original prompt is clear. Make sure each query is creative, unique and not similar to each other: <prompt>${query}</prompt>`,
     learnings
       ? `Here are some learnings from previous research, use them to generate more specific queries: ${learnings.join(
-          '\n',
-        )}`
+        '\n',
+      )}`
       : '',
     `You MUST respond in JSON matching this JSON schema: ${jsonSchema}`,
     lp,
   ].join('\n\n')
   return streamText({
-    model: useAiModel(),
+    model: getLanguageModel(aiConfig),
     system: systemPrompt(),
     prompt,
     onError({ error }) {
@@ -149,12 +150,14 @@ function processSearchResult({
   numLearnings = 5,
   numFollowUpQuestions = 3,
   language,
+  aiConfig,
 }: {
   query: string
   results: WebSearchResult[]
   language: string
   numLearnings?: number
   numFollowUpQuestions?: number
+  aiConfig: ConfigAi
 }) {
   const schema = z.object({
     learnings: z
@@ -194,7 +197,7 @@ function processSearchResult({
   ].join('\n\n')
 
   return streamText({
-    model: useAiModel(),
+    model: getLanguageModel(aiConfig),
     system: systemPrompt(),
     prompt,
     onError({ error }) {
@@ -207,6 +210,7 @@ export function writeFinalReport({
   prompt,
   learnings,
   language,
+  aiConfig,
 }: WriteFinalReportParams) {
   const learningsString = trimPrompt(
     learnings
@@ -229,7 +233,7 @@ ${learning.learning}
   ].join('\n\n')
 
   return streamText({
-    model: useAiModel(),
+    model: getLanguageModel(aiConfig),
     system: systemPrompt(),
     prompt: _prompt,
     onError({ error }) {
@@ -247,6 +251,7 @@ export async function deepResearch({
   breadth,
   maxDepth,
   languageCode,
+  aiConfig,
   searchLanguageCode,
   learnings,
   onProgress,
@@ -259,6 +264,8 @@ export async function deepResearch({
   maxDepth: number
   /** The language of generated response */
   languageCode: Locale
+  /** The AI model configuration */
+  aiConfig: ConfigAi
   /** The language of SERP query */
   searchLanguageCode?: Locale
   /** Accumulated learnings from all nodes visited so far */
@@ -299,6 +306,7 @@ export async function deepResearch({
         numQueries: breadth,
         language,
         searchLanguage,
+        aiConfig,
       })
 
       for await (const chunk of parseStreamingJson(
@@ -370,7 +378,6 @@ export async function deepResearch({
           if (!searchQuery?.query) {
             return {
               learnings: [],
-              visitedUrls: [],
             }
           }
           onProgress({
@@ -404,6 +411,7 @@ export async function deepResearch({
               results,
               numFollowUpQuestions: nextBreadth,
               language,
+              aiConfig,
             })
             let searchResult: PartialProcessedSearchResult = {}
 
@@ -479,8 +487,8 @@ export async function deepResearch({
               const nextQuery = `
               Previous research goal: ${searchQuery.researchGoal}
               Follow-up research directions: ${searchResult.followUpQuestions
-                .map((q) => `\n${q}`)
-                .join('')}
+                  .map((q) => `\n${q}`)
+                  .join('')}
             `.trim()
 
               // Add concurrency by 1, and do next recursive search
@@ -495,6 +503,7 @@ export async function deepResearch({
                   currentDepth: nextDepth,
                   nodeId: searchQuery.nodeId,
                   languageCode,
+                  aiConfig,
                 })
                 return r
               } catch (error) {

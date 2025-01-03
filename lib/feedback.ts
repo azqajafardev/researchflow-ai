@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 
 import { languagePrompt, systemPrompt } from './prompt'
-import { useAiModel } from '~/composables/useAiProvider'
-import { parseStreamingJson, type DeepPartial } from '~~/utils/json'
-import { throwAiError } from '~~/utils/errors'
+import { parseStreamingJson, type DeepPartial } from '~~/shared/utils/json'
+import { throwAiError } from '~~/shared/utils/errors'
+import { getLanguageModel } from '~~/shared/utils/ai-model'
 
 type PartialFeedback = DeepPartial<z.infer<typeof feedbackTypeSchema>>
 
@@ -17,9 +17,11 @@ export function generateFeedback({
   query,
   language,
   numQuestions = 3,
+  aiConfig,
 }: {
   query: string
   language: string
+  aiConfig: ConfigAi
   numQuestions?: number
 }) {
   const schema = z.object({
@@ -36,7 +38,7 @@ export function generateFeedback({
   ].join('\n\n')
 
   const stream = streamText({
-    model: useAiModel(),
+    model: getLanguageModel(aiConfig),
     system: systemPrompt(),
     prompt,
     onError({ error }) {
