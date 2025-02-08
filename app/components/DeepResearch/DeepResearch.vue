@@ -215,7 +215,9 @@
       case 'error':
         console.error(`[DeepResearch] node ${nodeId} error:`, node, step.message)
         if (node) {
-          node.learnings = []
+          // Deeper query planning uses this node ID after its evidence was committed.
+          // Discard extraction drafts, but keep findings from a completed search.
+          node.learnings = searchResults.value[nodeId]?.learnings ?? []
           node.error = step.message
         }
         toast.add({

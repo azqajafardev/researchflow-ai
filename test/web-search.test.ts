@@ -143,6 +143,20 @@ describe('provider search filters', () => {
 })
 
 describe('search plan validation', () => {
+  it('copies inherited domain restrictions while allowing domains for unrestricted searches', () => {
+    const inherited = { includeDomains: ['example.com'] }
+    const plan = { query: 'Acme details', researchGoal: '', includeDomains: ['outside.example'] }
+    const resolved = resolveSearchPlan(plan, inherited)
+    assert.deepEqual(resolved.includeDomains, ['example.com'])
+    resolved.includeDomains!.push('another.example')
+    assert.deepEqual(inherited.includeDomains, ['example.com'])
+    assert.deepEqual(resolveSearchPlan(plan).includeDomains, plan.includeDomains)
+    assert.deepEqual(
+      resolveSearchPlan(plan, { includeDomains: [] }).includeDomains,
+      plan.includeDomains,
+    )
+  })
+
   it('accepts legacy query objects, rejects invalid dates/domains, and never truncates meaningful queries', () => {
     const query =
       'A detailed entity-specific query with a meaningful long product name and comparison'

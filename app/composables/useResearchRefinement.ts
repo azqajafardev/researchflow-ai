@@ -2,7 +2,11 @@ import { computed, shallowRef } from 'vue'
 import type { useResearchSession } from './useResearchSession'
 import type { useResearchOperationRuntime } from './useResearchOperationRuntime'
 import type { ResearchHistoryGraph } from '~/types/history'
-import { runResearchRefinement, type RefinementRequest } from '~/utils/research-refinement'
+import {
+  createRefinementGraph,
+  runResearchRefinement,
+  type RefinementRequest,
+} from '~/utils/research-refinement'
 import { getCombinedQuery } from '~/utils/prompt'
 import { useServerMode } from './useServerMode'
 import { useHistory } from './useHistory'
@@ -46,30 +50,13 @@ export function useResearchRefinement(options: {
         },
       })
       if (!options.session.isCurrentOperation(lease.sessionId, lease.operationId)) return
-      const existing = options.getGraph()
-      const nodes = existing?.nodes.length
-        ? [...existing.nodes]
-        : [{ id: '0', label: lease.input.query, learnings: lease.result.learnings }]
-      const nextIndex =
-        Math.max(
-          0,
-          ...nodes.map((node) => (/^0-\d+$/.test(node.id) ? Number(node.id.slice(2)) : 0)),
-        ) + 1
-      const id = `0-${nextIndex}`
-      const graph: ResearchHistoryGraph = {
-        nodes: [
-          ...nodes,
-          {
-            id,
-            label: request.instruction.trim(),
-            researchGoal: lease.result.learnings[request.learningIndex]!.learning,
-            learnings: outcome.findings,
-            searchResults: outcome.findings.map(({ url, title }) => ({ url, title })),
-            status: 'node_complete',
-          },
-        ],
-        selectedNodeId: existing?.selectedNodeId,
-      }
+      const graph = createRefinementGraph({
+        graph: options.getGraph(),
+        query: lease.input.query,
+        result: lease.result,
+        findings: outcome.findings,
+        request,
+      })
       const history = addHistoryItem({
         ...lease.input,
         title: t('researchEvidence.historyTitle', { query: lease.input.query }),

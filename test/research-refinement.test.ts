@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { runResearchRefinement } from '../app/utils/research-refinement.ts'
+import { createRefinementGraph, runResearchRefinement } from '../app/utils/research-refinement.ts'
+import { restoreResearchHistoryGraph } from '../app/utils/research-history-graph.ts'
+import { collectResearchResult } from '../app/utils/research-result.ts'
 import {
   createInitialResearchSession,
   researchSessionReducer,
@@ -58,6 +60,54 @@ function services(overrides: Record<string, unknown> = {}) {
 }
 
 describe('research follow-up transaction', () => {
+  it('keeps legacy findings after refinement, history restoration and a node retry', () => {
+    for (const originalGraph of [undefined, { nodes: [{ id: '0', label: 'Start' }] }]) {
+      const snapshot = structuredClone(originalGraph)
+      const graph = createRefinementGraph({
+        graph: originalGraph,
+        query: base.originalQuery,
+        result,
+        findings: [finding],
+        request: base.request,
+      })
+      const restored = restoreResearchHistoryGraph(JSON.parse(JSON.stringify(graph)))
+      const followUpNode = graph.nodes.find((node) => node.id !== '0')!
+      // Retrying the follow-up replaces only its findings; the legacy report survives.
+      const retried = { ...finding, learning: 'Price is now 14' }
+      restored.searchResults[followUpNode.id] = { learnings: [retried] }
+      assert.deepEqual(collectResearchResult(Object.values(restored.searchResults)), {
+        learnings: [...result.learnings, retried],
+      })
+      assert.deepEqual(originalGraph, snapshot)
+    }
+  })
+
+  it('fills missing graph evidence without duplicating findings owned by existing nodes', () => {
+    const existing = {
+      nodes: [
+        { id: '0', label: 'Start' },
+        { id: '0-3', label: 'Existing search', learnings: result.learnings },
+      ],
+      selectedNodeId: '0-3',
+    }
+    const snapshot = structuredClone(existing)
+    const missing = { url: result.learnings[0]!.url, learning: 'Another fact from the same page' }
+    const graph = createRefinementGraph({
+      graph: existing,
+      query: base.originalQuery,
+      result: { learnings: [...result.learnings, missing] },
+      findings: [finding],
+      request: base.request,
+    })
+    assert.deepEqual(graph.nodes[0]?.learnings, [missing])
+    assert.deepEqual(graph.nodes[1]?.learnings, result.learnings)
+    assert.equal(graph.nodes[2]?.id, '0-4')
+    assert.equal(graph.selectedNodeId, '0-3')
+    const restored = restoreResearchHistoryGraph(JSON.parse(JSON.stringify(graph)))
+    assert.equal(collectResearchResult(Object.values(restored.searchResults)).learnings.length, 3)
+    assert.deepEqual(existing, snapshot)
+  })
+
   it('searches a bounded question, patches only cited blocks and appends evidence', async () => {
     const stages: string[] = []
     const outcome = await runResearchRefinement({

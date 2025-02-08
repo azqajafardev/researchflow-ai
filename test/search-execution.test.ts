@@ -70,6 +70,34 @@ async function run(
 }
 
 describe('structured search execution', () => {
+  it('enforces inherited domains during initial search, recovery and deeper research', async () => {
+    mockModel([
+      { queries: [plan] },
+      {
+        learnings: [],
+        relevantUrls: [],
+        rewriteQuery: 'Acme editor launch',
+        followUpQuestions: [],
+      },
+      { learnings: [finding], relevantUrls: [url], followUpQuestions: ['Check details'] },
+      {
+        queries: [{ ...plan, query: 'Acme official details', includeDomains: ['outside.example'] }],
+      },
+      { learnings: [finding], relevantUrls: [url], followUpQuestions: [] },
+    ])
+    const queries: string[] = []
+    const { result } = await run(
+      async (query, options) => {
+        queries.push(query)
+        assert.deepEqual(options.includeDomains, ['example.com'])
+        return [source]
+      },
+      { maxDepth: 2, searchConstraints: { includeDomains: ['example.com'] } },
+    )
+    assert.deepEqual(queries, [plan.query, 'Acme editor launch', 'Acme official details'])
+    assert.equal(result.learnings.length, 1)
+  })
+
   it('keeps search language separate, passes filters and source dates, and needs no extra model call on success', async () => {
     const prompts: string[] = []
     mockModel(

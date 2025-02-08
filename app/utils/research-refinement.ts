@@ -1,5 +1,6 @@
 import type { useServerMode } from '~/composables/useServerMode'
 import type { ConfigAi } from '~~/shared/types/config'
+import type { ResearchHistoryGraph } from '~/types/history'
 import type { ResearchLearning, ResearchResult } from '~~/shared/types/research-session'
 import { throwIfAborted } from '~~/shared/utils/abort'
 import { deduplicateLearnings } from '~~/shared/utils/research-learning'
@@ -15,6 +16,43 @@ import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
 export interface RefinementRequest {
   learningIndex: number
   instruction: string
+}
+
+/** Keep all original findings available when a refined history is restored and retried. */
+export function createRefinementGraph(options: {
+  graph?: ResearchHistoryGraph
+  query: string
+  result: ResearchResult
+  findings: ResearchLearning[]
+  request: RefinementRequest
+}): ResearchHistoryGraph {
+  const { graph, query, result, findings, request } = options
+  const nodes = graph?.nodes.map((node) => ({ ...node })) ?? []
+  let root = nodes.find((node) => node.id === '0')
+  if (!root) {
+    root = { id: '0', label: query }
+    nodes.unshift(root)
+  }
+  const represented = nodes.flatMap((node) => node.learnings ?? [])
+  const missing = result.learnings.filter(
+    (learning) =>
+      !represented.some((item) => item.url === learning.url && item.learning === learning.learning),
+  )
+  if (missing.length) {
+    root.learnings = deduplicateLearnings([...(root.learnings ?? []), ...missing])
+  }
+  const nextIndex =
+    Math.max(0, ...nodes.map((node) => (/^0-\d+$/.test(node.id) ? Number(node.id.slice(2)) : 0))) +
+    1
+  nodes.push({
+    id: `0-${nextIndex}`,
+    label: request.instruction.trim(),
+    researchGoal: result.learnings[request.learningIndex]!.learning,
+    learnings: findings,
+    searchResults: findings.map(({ url, title }) => ({ url, title })),
+    status: 'node_complete',
+  })
+  return { nodes, selectedNodeId: graph?.selectedNodeId }
 }
 
 export async function runResearchRefinement(options: {

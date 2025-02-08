@@ -149,7 +149,7 @@ export function generateSearchQueries({
     searchPlanningRules,
     searchQueryGuidance(searchProvider),
     searchConstraints
-      ? `Inherited search constraints (keep the time window): ${JSON.stringify(searchConstraints)}`
+      ? `Inherited search constraints (keep the time window and domain restrictions): ${JSON.stringify(searchConstraints)}`
       : '',
     focusBlock,
     learnings?.length
