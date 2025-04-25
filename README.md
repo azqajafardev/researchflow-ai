@@ -23,6 +23,16 @@ Please give a 🌟 Star if you like this project!
 
 ---
 
+<a target="_blank" href="https://doloffer.com/friend/4F8eETY2">Doloffer</a> - 一站式数字订阅充值平台
+
+主营 GPT、Claude 等多类 AI 数字服务会员正版订阅，9 折优惠码 AI8888，极速发货，售后无忧
+
+<a target="_blank" href="https://doloffer.com/friend/4F8eETY2">
+<img width="854" height="238" alt="image" src="https://github.com/user-attachments/assets/ab1cf6de-2e07-43a1-bdee-80f65f0e1ce3" />
+</a>
+
+---
+
 Power your online operations with [RapidProxy](https://www.rapidproxy.io/?ref=Ano) — real residential and static IPs.
 RapidProxy offers fast, anonymous connections with low block rates, automatic IP rotation, and stable performance — perfect for web scraping, social media automation, and global business. Free trial included, traffic never expires. Use RPD10 for 10% off!
 
