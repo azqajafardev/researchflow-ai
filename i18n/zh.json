@@ -115,5 +115,7 @@
     "newVersionDescription": "注：如果您使用的是自部署页面，请使用最新代码重新部署，即可获得最新功能和 bug 修复。",
     "refresh": "刷新",
     "dismiss": "忽略"
-  }
+  },
+  "exitFullscreen": "退出全屏",
+  "fullscreen": "全屏"
 }

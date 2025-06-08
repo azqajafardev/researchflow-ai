@@ -345,19 +345,21 @@
 <template>
   <UModal v-if="isFullscreen" open fullscreen :ui="{ body: '!pr-0' }">
     <template #header>
-      <div class="flex items-center justify-between">
+      <div class="w-full flex items-center justify-between">
         <div>
           <h2 class="font-bold">{{ t('webBrowsing.title') }}</h2>
           <p class="text-sm text-gray-500">
             {{ t('webBrowsing.clickToView') }}
           </p>
         </div>
-        <UButton
-          icon="i-heroicons-arrows-pointing-out"
-          :variant="isFullscreen ? 'solid' : 'ghost'"
-          :color="isFullscreen ? 'primary' : 'info'"
-          @click="toggleFullscreen"
-        />
+        <UTooltip :text="t('exitFullscreen')" :delay-duration="100">
+          <UButton
+            icon="i-material-symbols:fullscreen-exit"
+            variant="ghost"
+            color="info"
+            @click="toggleFullscreen"
+          />
+        </UTooltip>
       </div>
     </template>
 
@@ -397,12 +399,14 @@
             {{ t('webBrowsing.clickToView') }}
           </p>
         </div>
-        <UButton
-          icon="i-heroicons-arrows-pointing-out"
-          variant="ghost"
-          color="info"
-          @click="toggleFullscreen"
-        />
+        <UTooltip :text="t('fullscreen')" :delay-duration="100">
+          <UButton
+            icon="i-material-symbols:fullscreen"
+            variant="ghost"
+            color="info"
+            @click="toggleFullscreen"
+          />
+        </UTooltip>
       </div>
     </template>
     <div class="flex flex-col">

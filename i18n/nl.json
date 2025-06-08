@@ -115,5 +115,7 @@
     "newVersionDescription": "Let op: Als u een zelfgehoste versie gebruikt, implementeer deze dan opnieuw om nieuwe functies en bugfixes te krijgen.",
     "refresh": "Pagina vernieuwen",
     "dismiss": "Afwijzen"
-  }
+  },
+  "exitFullscreen": "Volledig scherm verlaten",
+  "fullscreen": "Volledig scherm"
 }
