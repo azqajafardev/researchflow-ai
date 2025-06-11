@@ -15,8 +15,10 @@ describe('resolveResponseLanguage', () => {
     assert.equal(resolveResponseLanguage('zh'), '中文')
     assert.equal(resolveResponseLanguage('en'), 'English')
     assert.equal(resolveResponseLanguage('nl'), 'Nederlands')
+    assert.equal(resolveResponseLanguage('ko'), '한국어')
     assert.equal(resolveResponseLanguage('中文'), '中文')
     assert.equal(resolveResponseLanguage('English'), 'English')
+    assert.equal(resolveResponseLanguage('Korean'), '한국어')
   })
 })
 
@@ -24,6 +26,7 @@ describe('languagePrompt', () => {
   it('uses natural language names for locale codes', () => {
     assert.match(languagePrompt('zh'), /^Respond in 中文\./)
     assert.match(languagePrompt('en'), /^Respond in English\./)
+    assert.match(languagePrompt('ko'), /^Respond in 한국어\./)
   })
 
   it('adds CJK spacing guidance for Chinese locales and names', () => {
@@ -48,7 +51,6 @@ describe('task-specific system prompts', () => {
   it('steers search planning toward specific retrievable queries', () => {
     assert.match(searchPlannerSystemPrompt(), /specificity/)
   })
-
 })
 
 describe('getCombinedQuery', () => {

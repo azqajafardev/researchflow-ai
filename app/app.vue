@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
-  import { en, nl, zh_cn } from '@nuxt/ui/locale'
+  import { en, ko, nl, zh_cn } from '@nuxt/ui/locale'
 
   const { locale } = useI18n()
-  const uiLocales = { en, nl, zh: zh_cn } as const
+  const uiLocales = { en, ko, nl, zh: zh_cn } as const
   const uiLocale = computed(() => uiLocales[locale.value as keyof typeof uiLocales] ?? en)
 
   useHead({
