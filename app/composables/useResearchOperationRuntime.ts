@@ -17,12 +17,6 @@ interface ActiveOperation {
   timer: TimerHandle
 }
 
-export const defaultResearchOperationTimeouts: Record<ResearchPhase, number> = {
-  feedback: 120_000,
-  research: 900_000,
-  report: 300_000,
-}
-
 export function useResearchOperationRuntime(options: ResearchOperationRuntimeOptions) {
   const scheduleTimeout =
     options.scheduleTimeout ?? ((callback, delay) => setTimeout(callback, delay))

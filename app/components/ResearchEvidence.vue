@@ -1,10 +1,11 @@
 <script setup lang="ts">
+  import type { DeepReadonly } from 'vue'
   import type { ResearchLearning } from '~~/shared/types/research-session'
   import type { RefinementRequest, RefinementStage } from '~/utils/research-refinement'
   import { toSafeHttpUrl } from '~/utils/markdown'
 
   const props = defineProps<{
-    learnings: ResearchLearning[]
+    learnings: DeepReadonly<ResearchLearning[]>
     citedIndices: number[]
     disabled?: boolean
     pending?: boolean

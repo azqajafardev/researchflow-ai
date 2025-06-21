@@ -51,7 +51,7 @@
           ref="report"
           :disabled="!canRegenerateReport"
           :query="form.query"
-          :result="researchResult"
+          :result="session.result"
           :refine-disabled="isRunning || !session.report"
           :refining="refinement.pending.value"
           :refinement-stage="refinement.stage.value"
@@ -79,7 +79,6 @@
     ResearchInputData,
     ResearchOperationLease,
     ResearchPhase,
-    ResearchResult,
   } from '~~/shared/types/research-session'
   import { isTimeoutError } from '~~/shared/utils/abort'
 
@@ -99,9 +98,6 @@
     numQuestions: 3,
   })
   const feedback = ref<ResearchFeedbackResult[]>([])
-  const researchResult = ref<ResearchResult>({
-    learnings: [],
-  })
 
   const researchSession = useResearchSession()
   const {
@@ -142,9 +138,6 @@
     runtime: operationRuntime,
     getGraph: () => deepResearchRef.value?.exportGraph(),
     onComplete(report, graph) {
-      researchResult.value = {
-        learnings: researchSession.state.value.result.learnings.map((item) => ({ ...item })),
-      }
       reportRef.value?.displayReport(report, true)
       deepResearchRef.value?.importGraph(graph)
     },
@@ -188,7 +181,6 @@
     refinement.reset()
     deepResearchRef.value?.clear()
     reportRef.value?.displayReport('')
-    researchResult.value = { learnings: [] }
     try {
       const result = await feedbackRef.value?.getFeedback({
         input: lease.input,
@@ -219,9 +211,6 @@
       })
       if (!isCurrentOperation(lease.sessionId, lease.operationId)) return
       if (!result?.learnings.length) throw new Error(t('researchSession.noLearnings'))
-      researchResult.value = {
-        learnings: result.learnings.map((item) => ({ ...item })),
-      }
 
       const historyItem = addHistoryItem({
         title: lease.input.query,
@@ -289,9 +278,6 @@
       if (!isCurrentOperation(lease.sessionId, lease.operationId)) return
       if (!result?.learnings.length) throw new Error(t('researchSession.noLearnings'))
 
-      researchResult.value = {
-        learnings: result.learnings.map((item) => ({ ...item })),
-      }
       reportRef.value?.displayReport('')
       const historyUpdates = {
         learnings: result.learnings.map((item) => ({ ...item })),
@@ -350,9 +336,6 @@
       numQuestions: item.numQuestions,
     }
     feedback.value = item.feedback.map((entry) => ({ ...entry }))
-    researchResult.value = {
-      learnings: item.learnings.map((learning) => ({ ...learning })),
-    }
     deepResearchRef.value?.importGraph(item.graph)
     reportRef.value?.displayReport(item.report || '')
   }

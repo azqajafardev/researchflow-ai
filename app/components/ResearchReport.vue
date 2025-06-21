@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import type { DeepReadonly } from 'vue'
   import { useServerMode } from '~/composables/useServerMode'
   import { createCitationHtml, renderSafeMarkdown } from '~/utils/markdown'
   import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
@@ -21,7 +22,7 @@
   const props = defineProps<{
     disabled?: boolean
     query: string
-    result: ResearchResult
+    result: DeepReadonly<ResearchResult>
     refineDisabled?: boolean
     refining?: boolean
     refinementStage?: RefinementStage
