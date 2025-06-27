@@ -8,13 +8,38 @@ async function* parseSSEStream(response: Response) {
   if (!reader) throw new Error('No response body')
 
   const decoder = new TextDecoder()
+  let buffer = ''
   
   while (true) {
     const { done, value } = await reader.read()
-    if (done) break
+    if (done) {
+      // 处理缓冲区中剩余的数据
+      if (buffer.trim()) {
+        const lines = buffer.split('\n\n')
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') return
+            
+            try {
+              const step = JSON.parse(data)
+              yield step
+            } catch (e) {
+              console.error('Failed to parse SSE data:', e)
+            }
+          }
+        }
+      }
+      break
+    }
     
-    const chunk = decoder.decode(value)
-    const lines = chunk.split('\n\n')
+    buffer += decoder.decode(value, { stream: true })
+    
+    // 检查是否有完整的 SSE 消息
+    const lines = buffer.split('\n\n')
+    
+    // 保留最后一个不完整的部分
+    buffer = lines.pop() || ''
     
     for (const line of lines) {
       if (line.startsWith('data: ')) {
