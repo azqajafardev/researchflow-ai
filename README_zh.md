@@ -110,12 +110,9 @@
 #### 服务端模式（推荐）
 通过环境变量部署，用户无需配置 API 密钥：
 
-```bash
-# 复制并配置环境变量
-cp .env.example .env
-# 编辑 .env 填入你的 API 密钥和配置
+**使用 Docker 和环境变量：**
 
-# Docker 部署
+```bash
 docker run -p 3000:3000 \
   -e NUXT_PUBLIC_SERVER_MODE=true \
   -e NUXT_AI_API_KEY=你的AI-API密钥 \
@@ -124,6 +121,13 @@ docker run -p 3000:3000 \
   -e NUXT_PUBLIC_AI_MODEL=gpt-4o-mini \
   -e NUXT_PUBLIC_WEB_SEARCH_PROVIDER=tavily \
   anotia/deep-research-web:latest
+```
+
+**使用 Docker 和 .env 文件：**
+
+```bash
+# 创建 .env 文件并填入配置
+docker run -p 3000:3000 --env-file .env anotia/deep-research-web:latest
 ```
 
 #### 客户端模式（传统）

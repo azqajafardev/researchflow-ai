@@ -125,12 +125,9 @@ Live demo: <a href="https://deep-research.ataw.top" target="_blank">https://deep
 #### Server Mode (Recommended)
 Deploy with environment variables - users don't need to configure API keys:
 
-```bash
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env with your API keys and settings
+**Using Docker with environment variables:**
 
-# Docker deployment
+```bash
 docker run -p 3000:3000 \
   -e NUXT_PUBLIC_SERVER_MODE=true \
   -e NUXT_AI_API_KEY=your-ai-api-key \
@@ -139,6 +136,13 @@ docker run -p 3000:3000 \
   -e NUXT_PUBLIC_AI_MODEL=gpt-4o-mini \
   -e NUXT_PUBLIC_WEB_SEARCH_PROVIDER=tavily \
   anotia/deep-research-web:latest
+```
+
+**Using Docker with .env file:**
+
+```bash
+# Create .env file with your configuration
+docker run -p 3000:3000 --env-file .env anotia/deep-research-web:latest
 ```
 
 #### Client Mode (Traditional)
