@@ -24,6 +24,13 @@ Please give a 🌟 Star if you like this project!
 
 ## Recent updates
 
+25/03/09
+
+- Added: InifiniAI support
+- Improved LLM prompts
+- Improved error handling
+- Improved: Try to fetch model list even when no API key is provided
+
 25/02/27
 
 - Added: Citations in research report
