@@ -23,16 +23,7 @@
           </div>
         </div>
 
-        <i18n-t class="whitespace-pre-wrap" keypath="index.projectDescription" tag="p">
-          <UButton
-            class="!p-0"
-            variant="link"
-            href="https://github.com/dzhng/deep-research"
-            target="_blank"
-          >
-            dzhng/deep-research
-          </UButton>
-        </i18n-t>
+        <p class="whitespace-pre-wrap">{{ $t('index.projectDescription') }}</p>
 
         <ResearchSessionStatus
           :status="session.status"

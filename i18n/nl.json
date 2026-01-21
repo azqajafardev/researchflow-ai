@@ -4,7 +4,7 @@
   "modelThinkingComplete": "Nadenken klaar",
   "invalidStructuredOutput": "Het model heeft content geretourneerd die onvolledig of ongeldig is en niet kan worden verwerkt. Probeer een groter of \"slimmer\" model te gebruiken.",
   "index": {
-    "projectDescription": "Dit is een Web-UI voor {0} waarmee AI online kan zoeken en zelf dieper kan graven op basis van specifieke vragen, en vervolgens een onderzoeksrapport kan genereren.\nDit project bevat AI-reacties voor realtime feedback en visualisatie van het onderzoeksproces met behulp van een boomdiagram.\nAlle API-aanvragen worden direct vanuit uw browser verzonden. Er worden geen gegevens extern opgeslagen.",
+    "projectDescription": "Deep Research is een AI-onderzoeksassistent: geef een vraag op en de AI plant webzoekopdrachten, graaft in meerdere rondes dieper, verifieert bevindingen aan de hand van echte bronpagina's en schrijft een rapport met bronvermeldingen.\nAI-reacties worden gestreamd voor realtime feedback, en het onderzoeksproces wordt gevisualiseerd met een boomdiagram.\nIn de clientmodus worden alle API-aanvragen rechtstreeks vanuit uw browser verzonden en worden er geen gegevens extern opgeslagen.",
     "missingConfigTitle": "Configuratie niet compleet",
     "missingConfigDescription": "Voor dit project moet u uw eigen API-sleutels meenemen."
   },

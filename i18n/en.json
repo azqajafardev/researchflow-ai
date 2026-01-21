@@ -4,7 +4,7 @@
   "modelThinkingComplete": "Thinking complete",
   "invalidStructuredOutput": "The model returned content which is incomplete or invalid and cannot be parsed. Try using a bigger or \"smarter\" model.",
   "index": {
-    "projectDescription": "This is a web UI for {0} that allows AI to search online and dig deeper on its own based on specific questions, and then output a research report.\nThis project features streaming AI responses for realtime feedback, and visualization of the research process using a tree structure.\nAll API requests are directly sent from your browser. No remote data stored.",
+    "projectDescription": "Deep Research is an AI research agent: give it a question and it plans web searches, digs deeper across multiple rounds, verifies findings against real source pages, and writes a cited report.\nResponses stream in for realtime feedback, and the research process is visualized as a tree.\nIn Client Mode, all API requests are sent directly from your browser and no data is stored remotely.",
     "missingConfigTitle": "Config not set",
     "missingConfigDescription": "This project requires you to bring your own API keys."
   },

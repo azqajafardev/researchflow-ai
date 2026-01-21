@@ -2,7 +2,7 @@
 
 [English | [中文](README_zh.md)]
 
-This is a web UI for https://github.com/dzhng/deep-research, with several improvements and fixes.
+Deep Research Web UI turns a research question into a cited report: it plans searches, browses the web, verifies findings against real source pages, and lets you inspect and follow up on every citation — all from your browser, or self-hosted with your own API keys.
 
 Features:
 
@@ -15,10 +15,11 @@ Features:
 - 🔧 **Server Mode**: Deploy with environment variables, no need for users to configure API keys
 - 🔎 **Evidence and follow-ups**: Inspect source excerpts from report citations, then research a finding further and update related passages while keeping the original report in history
 - 🎯 **Focused search**: Separate queries from time and source filters, check result relevance, and retry once with a revised query when evidence is insufficient
+- 📖 **On-demand full-page reading**: Fetches full source pages to extract verbatim evidence when search snippets aren't enough, sharing a token/request budget across the whole research run
 
 Currently available providers:
 
-- AI: OpenAI compatible, [ApiSmart](https://www.apismart.ai), SiliconFlow, InfiniAI, DeepSeek, OpenRouter, Ollama and more
+- AI: OpenAI compatible, [ApiSmart](https://www.apismart.ai), SiliconFlow, InfiniAI, DeepSeek, OpenRouter, Requesty, Ollama, LiteLLM and more
 - Web Search: Tavily (1000 free credits / month), [Firecrawl](https://firecrawl.dev) (cloud / self-hosted), fastCRW (cloud / self-hosted), Google PSE
 
 Please give a 🌟 Star if you like this project!
@@ -44,6 +45,15 @@ Please give a 🌟 Star if you like this project!
 ---
 
 ## How to use
+
+### Inspect evidence and follow up
+
+1. After a research finishes, click a `[1]`-style citation in the report, or click **Inspect evidence and follow up**.
+2. In the evidence panel, review each finding's source, retrieval time, and excerpt. A new excerpt is only saved once it's matched against retrieved content; search summaries and page text are labeled separately. A matched excerpt does not by itself prove the finding — read it in context.
+3. Enter what you want to verify, e.g. "Find the latest official pricing and confirm the eligibility terms," then click **Follow up and update report**. A follow-up searches at most two directions in one round, and updates only the Markdown blocks that cite that finding; tables and lists are updated as whole blocks.
+4. On success, the new evidence and updated report are saved as a separate history entry, leaving the original report unchanged. On failure, cancellation, or when no matching excerpt is found, the original report is preserved.
+
+This works in both Client Mode and Server Mode. Older history entries still load; findings without a saved excerpt are labeled accordingly. History is stored in your browser — export research you want to keep.
 
 Live demo: <a href="https://deep-research.ataw.top" target="_blank">https://deep-research.ataw.top</a>
 
