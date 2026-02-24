@@ -190,7 +190,7 @@ export const searchResultTypeSchema = z.object({
   ),
   followUpQuestions: z.array(z.string()),
   relevantUrls: z.array(z.string()).optional(),
-  rewriteQuery: z.string().optional(),
+  rewriteQuery: z.string().nullish(),
 })
 
 function processSearchResult({
@@ -245,7 +245,7 @@ function processSearchResult({
       ),
     rewriteQuery: z
       .string()
-      .optional()
+      .nullish()
       .describe(
         'Only if results are insufficient: ONE simpler query preserving the goal, named entities, and language. Preserve meaningful exact terms and supported operators; avoid unrelated keyword piles. Omit if no useful rewrite.',
       ),

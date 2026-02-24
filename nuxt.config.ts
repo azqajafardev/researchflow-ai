@@ -119,6 +119,9 @@ export default defineNuxtConfig({
       compilerOptions: {
         strict: true,
       },
+      // Paths are relative to the generated .nuxt/tsconfig.app.json
+      include: ['../lib/**/*'],
+      exclude: ['../lib/**/*.test.ts'],
     },
     // Customize build-time TypeScript config
     nodeTsConfig: {
