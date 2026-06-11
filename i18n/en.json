@@ -29,8 +29,12 @@
           "description": "Offers ¥14 free credits on register. Get one API key at {0}."
         },
         "infiniai": {
-          "title": "Infiniai",
+          "title": "InfiniAI",
           "description": "After registration, you can use the full-powered DeepSeek R1 and other inference-accelerated models without any barriers. Generate an API key after logging in at {0}."
+        },
+        "302-ai": {
+          "title": "302.AI",
+          "description": "Offers $1 free credit on register. Get one API key at {0}."
         }
       }
     },

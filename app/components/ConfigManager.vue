@@ -52,6 +52,15 @@
       linkText: 'cloud.siliconflow.cn',
     },
     {
+      label: t('settings.ai.providers.302-ai.title'),
+      help: 'settings.ai.providers.302-ai.description',
+      // Only kept for easy reference in i18n Ally
+      _help: t('settings.ai.providers.302-ai.description'),
+      value: '302-ai',
+      link: 'https://share.302.ai/GqEnKu',
+      linkText: '302.ai',
+    },
+    {
       label: t('settings.ai.providers.infiniai.title'),
       help: 'settings.ai.providers.infiniai.description',
       // Only kept for easy reference in i18n Ally

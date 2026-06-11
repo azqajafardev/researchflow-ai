@@ -4,6 +4,7 @@ import { getApiBase } from '~~/shared/utils/ai-model'
 export type ConfigAiProvider =
   | 'openai-compatible'
   | 'siliconflow'
+  | '302-ai'
   | 'infiniai'
   | 'openrouter'
   | 'deepseek'

@@ -29,8 +29,12 @@
           "description": "注册赠送 ¥14 免费额度。在 {0} 生成一个 API key。"
         },
         "infiniai": {
-          "title": "Infiniai 无问芯穹",
+          "title": "InfiniAI 无问芯穹",
           "description": "注册后，无门槛免费用 DeepSeek R1 满血等推理加速版模型。登录 {0} 后生成 API key。"
+        },
+        "302-ai": {
+          "title": "302.AI",
+          "description": "注册赠送 $1 免费额度。在 {0} 生成一个 API key。"
         }
       }
     },

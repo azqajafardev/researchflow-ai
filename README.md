@@ -36,6 +36,10 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 
 ## Recent updates
 
+25/06/26
+
+- Added: Provider 302.AI support
+
 25/04/06
 
 - Added: Use Google PSE for web search
