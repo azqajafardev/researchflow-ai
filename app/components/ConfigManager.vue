@@ -307,7 +307,7 @@
                 </template>
                 <USelect
                   v-model="config.webSearch.provider"
-                  class="w-30"
+                  class="w-full"
                   :items="webSearchProviderOptions"
                 />
               </UFormField>
