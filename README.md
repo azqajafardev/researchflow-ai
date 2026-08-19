@@ -21,7 +21,18 @@ Currently available providers:
 
 Please give a 🌟 Star if you like this project!
 
+---
+
+Power your online operations with [RapidProxy](https://www.rapidproxy.io/?ref=Ano) — real residential and static IPs.
+RapidProxy offers fast, anonymous connections with low block rates, automatic IP rotation, and stable performance — perfect for web scraping, social media automation, and global business. Free trial included, traffic never expires. Use RPD10 for 10% off!
+
+<a target="_blank" href="https://www.rapidproxy.io/?ref=Ano">
+<img width="500" alt="RapidProxy" src="https://github.com/user-attachments/assets/9759f7c7-fbc2-4ecc-88d7-c42edf6fbc16" />
+</a>
+
 <video width="500" src="https://github.com/user-attachments/assets/8f9baa43-a74e-4613-aebb-1bcc29a686f0" controls></video>
+
+---
 
 ## Recent updates
 
