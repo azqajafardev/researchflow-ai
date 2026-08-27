@@ -44,8 +44,8 @@ export function assessSearchLearnings(
               : !candidates.length
                 ? 'unmatched_sources'
                 : 'unmatched_quotes',
-    resultsCount: results.length,
-    relevantCount: relevant.length,
+    resultsCount: new Set(results.map((item) => item.url)).size,
+    relevantCount: new Set(relevant.map((item) => item.url)).size,
     findingsCount: drafts?.length ?? 0,
     verifiedCount: learnings.length,
     extractionRetried,

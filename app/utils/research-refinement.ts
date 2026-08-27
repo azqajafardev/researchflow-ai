@@ -1,3 +1,4 @@
+import { isReadableUrl } from '~~/shared/utils/source-url'
 import type { useServerMode } from '~/composables/useServerMode'
 import type { ConfigAi } from '~~/shared/types/config'
 import type { ResearchHistoryGraph } from '~/types/history'
@@ -12,6 +13,8 @@ import {
 } from '~~/shared/utils/report-revision'
 import { removeJsonMarkdown } from '~~/shared/utils/json'
 import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
+
+export type RefinementStage = 'reading' | 'searching' | 'revising'
 
 export interface RefinementRequest {
   learningIndex: number
@@ -65,7 +68,7 @@ export async function runResearchRefinement(options: {
   aiConfig: ConfigAi
   signal?: AbortSignal
   services: Pick<ReturnType<typeof useServerMode>, 'deepResearch' | 'writeFinalReport'>
-  onStage: (stage: 'searching' | 'revising') => void
+  onStage: (stage: RefinementStage) => void
 }) {
   const { request, signal, services } = options
   throwIfAborted(signal)
@@ -88,6 +91,7 @@ export async function runResearchRefinement(options: {
       `Find direct evidence that confirms, corrects, or contradicts the claim. Focus only on this follow-up, not the entire original research.`,
     ].join('\n\n'),
     originalQuery: options.originalQuery,
+    sourceUrls: isReadableUrl(target.url) ? [target.url] : undefined,
     breadth: 2,
     maxDepth: 1,
     currentDepth: 1,
@@ -96,6 +100,8 @@ export async function runResearchRefinement(options: {
     aiConfig: options.aiConfig,
     signal,
     onProgress(step) {
+      if (step.type === 'reading_source') options.onStage('reading')
+      if (step.type === 'searching') options.onStage('searching')
       if (step.type === 'complete') findings = step.learnings
     },
   })

@@ -25,6 +25,10 @@
       case 'generated_query':
         result.icon = 'i-lucide-clock-3'
         break
+      case 'reading_source':
+        result.icon = 'i-lucide-book-open'
+        result.pulse = true
+        break
       case 'searching':
         result.icon = 'i-lucide-search'
         result.pulse = true

@@ -6,6 +6,7 @@ import {
   createRefinementGraph,
   runResearchRefinement,
   type RefinementRequest,
+  type RefinementStage,
 } from '~/utils/research-refinement'
 import { getCombinedQuery } from '~/utils/prompt'
 import { useServerMode } from './useServerMode'
@@ -21,7 +22,7 @@ export function useResearchRefinement(options: {
   const { config } = storeToRefs(useConfigStore())
   const services = useServerMode()
   const { addHistoryItem } = useHistory()
-  const stage = shallowRef<'searching' | 'revising'>()
+  const stage = shallowRef<RefinementStage>()
   const error = shallowRef('')
   const success = shallowRef('')
   const pending = computed(() => !!stage.value)

@@ -28,7 +28,6 @@ export function finalizeLearningsFromSearchResults(
   if (!learnings?.length) return []
 
   const allowed = new Map(results.map((result) => [result.url, result.title]))
-  const sources = new Map(results.map((result) => [result.url, result]))
 
   return learnings.flatMap((learning) => {
     if (typeof learning.url !== 'string' || typeof learning.learning !== 'string') return []
@@ -36,9 +35,15 @@ export function finalizeLearningsFromSearchResults(
     const text = learning.learning.trim()
     if (!text) return []
 
-    const source = sources.get(learning.url)
     const quote =
       typeof learning.quote === 'string' ? learning.quote.trim().replace(/\s+/g, ' ') : undefined
+    // Keep search snippets and page bodies separate, even for the same citation URL.
+    const source = results.find(
+      (result) =>
+        result.url === learning.url &&
+        quote &&
+        result.content?.replace(/\s+/g, ' ').includes(quote),
+    )
     const content = source?.content?.replace(/\s+/g, ' ')
     // A model-proposed excerpt becomes evidence only after matching retrieved text.
     const evidence =

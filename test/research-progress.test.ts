@@ -144,3 +144,17 @@ describe('research progress evidence persistence', () => {
     assert.deepEqual(collectResearchResult(Object.values(restored.searchResults)).learnings, [])
   })
 })
+
+it('shows reading on the existing node and preserves that state in history', () => {
+  const { nodes, handle } = progressHarness()
+  handle({
+    type: 'generating_query',
+    nodeId: '0-0',
+    parentNodeId: '0',
+    result: { query: 'Read details' },
+  })
+  handle({ type: 'reading_source', nodeId: '0-0' })
+  const restored = restoreResearchHistoryGraph(createResearchHistoryGraph(nodes.value))
+  assert.equal(restored.nodes.find((node) => node.id === '0-0')?.status, 'reading_source')
+  assert.equal(restored.nodes.length, 2)
+})

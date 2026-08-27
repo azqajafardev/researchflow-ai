@@ -14,6 +14,13 @@
 
 <template>
   <div>
+    <p
+      v-if="node.status === 'reading_source'"
+      class="my-2 text-sm text-muted flex items-center gap-2"
+    >
+      <UIcon name="i-lucide-book-open" class="animate-pulse" />
+      {{ $t('webBrowsing.readingSource') }}
+    </p>
     <USeparator :label="$t('webBrowsing.nodeDetails')" />
     <UAlert
       v-if="node.error"

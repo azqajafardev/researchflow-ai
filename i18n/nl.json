@@ -92,6 +92,7 @@
     "noQuestions": "Je vraag is al duidelijk genoeg. Er zijn geen vervolgvragen nodig — je kunt doorgaan."
   },
   "webBrowsing": {
+    "readingSource": "Bronpagina’s lezen…",
     "title": "3. Zoeken op het Internet",
     "description": "De AI zal vervolgens het internet doorzoeken op basis van ons onderzoeksdoel, en herhalen totdat de diepte is bereikt.",
     "clickToView": "Klik op een onderliggend knooppunt om details te bekijken.",
@@ -198,6 +199,7 @@
     "useDarkTheme": "Donker thema gebruiken"
   },
   "researchEvidence": {
+    "reading": "Bronpagina’s lezen…",
     "title": "Conclusies en bewijs",
     "close": "Bewijspaneel sluiten",
     "open": "Bewijs bekijken en verder onderzoeken",

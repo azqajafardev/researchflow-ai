@@ -6,6 +6,8 @@ export type Locale = AvailableLocales[number]
 export type WebSearchResult = {
   content: string
   url: string
+  /** Redirect destination; url remains the stable citation identity. */
+  finalUrl?: string
   title?: string
   /** Provider publication metadata; not necessarily the event date. */
   publishedAt?: string

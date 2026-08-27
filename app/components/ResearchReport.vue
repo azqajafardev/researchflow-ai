@@ -3,7 +3,7 @@
   import { createCitationHtml, renderSafeMarkdown } from '~/utils/markdown'
   import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
   import type ResearchEvidence from './ResearchEvidence.vue'
-  import type { RefinementRequest } from '~/utils/research-refinement'
+  import type { RefinementRequest, RefinementStage } from '~/utils/research-refinement'
   import type {
     ResearchFeedbackSnapshot,
     ResearchInputSnapshot,
@@ -24,7 +24,7 @@
     result: ResearchResult
     refineDisabled?: boolean
     refining?: boolean
-    refinementStage?: 'searching' | 'revising'
+    refinementStage?: RefinementStage
     refinementError?: string
     refinementSuccess?: string
   }>()

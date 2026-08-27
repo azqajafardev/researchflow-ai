@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { ResearchLearning } from '~~/shared/types/research-session'
-  import type { RefinementRequest } from '~/utils/research-refinement'
+  import type { RefinementRequest, RefinementStage } from '~/utils/research-refinement'
   import { toSafeHttpUrl } from '~/utils/markdown'
 
   const props = defineProps<{
@@ -8,7 +8,7 @@
     citedIndices: number[]
     disabled?: boolean
     pending?: boolean
-    stage?: 'searching' | 'revising'
+    stage?: RefinementStage
     error?: string
     success?: string
   }>()

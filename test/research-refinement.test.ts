@@ -34,9 +34,12 @@ const base = {
 function services(overrides: Record<string, unknown> = {}) {
   return {
     async deepResearch(params: any) {
+      assert.deepEqual(params.sourceUrls, [result.learnings[0]!.url])
       assert.equal(params.breadth, 2)
       assert.equal(params.maxDepth, 1)
       assert.equal(params.learnings, undefined)
+      params.onProgress({ type: 'reading_source', nodeId: '0-0' })
+      params.onProgress({ type: 'searching', nodeId: '0-0', query: 'pricing' })
       params.onProgress({ type: 'complete', learnings: [finding] })
     },
     async writeFinalReport(params: any) {
@@ -115,7 +118,7 @@ describe('research follow-up transaction', () => {
       services: services(),
       onStage: (stage) => stages.push(stage),
     } as any)
-    assert.deepEqual(stages, ['searching', 'revising'])
+    assert.deepEqual(stages, ['searching', 'reading', 'searching', 'revising'])
     assert.equal(outcome.result.learnings.length, 2)
     assert.deepEqual(outcome.result.learnings[1].evidence, finding.evidence)
     assert.match(outcome.report, /^Price is 12 \[2\]/)

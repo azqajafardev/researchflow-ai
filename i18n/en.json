@@ -96,6 +96,7 @@
     "noQuestions": "Your query is already clear enough. No follow-up questions are needed — you can continue."
   },
   "webBrowsing": {
+    "readingSource": "Reading source pages…",
     "title": "3. Web Browsing",
     "description": "The AI will then search the web based on our research goal, and iterate until the depth is reached.",
     "clickToView": "Click a child node to view details.",
@@ -202,6 +203,7 @@
     "useDarkTheme": "Use dark theme"
   },
   "researchEvidence": {
+    "reading": "Reading source pages…",
     "title": "Findings and evidence",
     "close": "Close evidence panel",
     "open": "Inspect evidence and follow up",

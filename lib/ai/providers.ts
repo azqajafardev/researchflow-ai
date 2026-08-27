@@ -5,6 +5,8 @@ import { RecursiveCharacterTextSplitter } from '~~/lib/ai/text-splitter'
 const MinChunkSize = 140
 const encoder = getEncoding('o200k_base')
 
+export const countTokens = (text: string) => encoder.encode(text).length
+
 // trim prompt to maximum context size
 export function trimPrompt(prompt: string, contextSize?: number) {
   if (!prompt) {

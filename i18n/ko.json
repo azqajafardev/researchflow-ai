@@ -96,6 +96,7 @@
     "noQuestions": "모델이 후속 질문을 반환하지 않았습니다."
   },
   "webBrowsing": {
+    "readingSource": "출처 본문 읽는 중…",
     "title": "3. 웹 탐색",
     "description": "AI가 연구 목표에 따라 웹을 검색하고, 지정된 깊이에 도달할 때까지 반복합니다.",
     "clickToView": "자식 노드를 클릭하면 상세 정보를 볼 수 있습니다.",
@@ -202,6 +203,7 @@
     "useDarkTheme": "다크 테마 사용"
   },
   "researchEvidence": {
+    "reading": "출처 본문 읽는 중…",
     "title": "결론과 근거",
     "close": "근거 패널 닫기",
     "open": "근거 확인 및 추가 조사",

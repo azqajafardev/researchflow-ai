@@ -1,5 +1,10 @@
 import { deepResearch } from '~~/lib/core/deep-research'
-import { searchWeb, type WebSearchFunction, type WebSearchOptions } from '~~/lib/core/web-search'
+import {
+  createReadSource,
+  searchWeb,
+  type WebSearchFunction,
+  type WebSearchOptions,
+} from '~~/lib/core/web-search'
 import pLimit from 'p-limit'
 import type { ConfigAi, ConfigWebSearchProvider } from '~~/shared/types/config'
 import type { RuntimeConfig } from 'nuxt/schema'
@@ -143,6 +148,7 @@ export default defineEventHandler(async (event) => {
     languageCode,
     searchLanguageCode,
     searchConstraints,
+    sourceUrls,
     originalQuery,
     learnings = [],
     currentDepth = 1,
@@ -195,6 +201,7 @@ export default defineEventHandler(async (event) => {
           aiConfig: serverConfig,
           searchLanguageCode,
           searchConstraints,
+          sourceUrls,
           learnings,
           currentDepth,
           nodeId,
@@ -261,7 +268,7 @@ function getOrCreateApiKeyPool(
 }
 
 function createServerWebSearch(runtimeConfig: RuntimeConfig): WebSearchFunction {
-  return async (query: string, options: WebSearchOptions) => {
+  const search: WebSearchFunction = async (query: string, options: WebSearchOptions) => {
     const provider = runtimeConfig.public.webSearchProvider as ConfigWebSearchProvider
     const sharedConfig = {
       provider,
@@ -342,4 +349,38 @@ function createServerWebSearch(runtimeConfig: RuntimeConfig): WebSearchFunction 
       throw e
     }
   }
+  const provider = runtimeConfig.public.webSearchProvider as ConfigWebSearchProvider
+  let readSource: WebSearchFunction['readSource']
+  if (provider === 'firecrawl') {
+    readSource = createReadSource({
+      provider,
+      apiKey: runtimeConfig.webSearchApiKey,
+      apiBase: runtimeConfig.webSearchApiBase,
+    })
+  } else if (provider === 'tavily') {
+    readSource = async (url, options) => {
+      const pool = getOrCreateApiKeyPool(
+        apiKeyPool,
+        (next) => {
+          apiKeyPool = next
+        },
+        'tavily',
+        runtimeConfig,
+      )
+      const selected = pool.getNextKey()
+      if (!selected) return undefined
+      try {
+        const result = await createReadSource({ provider, apiKey: selected.key })!(url, options)
+        if (result) pool.markKeySuccess(selected.key)
+        return result
+      } catch (error) {
+        if (options.signal?.aborted || isAbortError(error)) throw error
+        // Page-level failures must not disable an otherwise valid API key.
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 401 || status === 403) pool.markKeyError(selected.key)
+        throw error
+      }
+    }
+  }
+  return Object.assign(search, { readSource })
 }

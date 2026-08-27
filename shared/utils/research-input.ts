@@ -1,5 +1,6 @@
 import { searchConstraintsSchema } from '~~/shared/utils/search-plan'
 import { z } from 'zod'
+import { isReadableUrl } from '~~/shared/utils/source-url'
 import { researchLearningSchema } from '~~/shared/utils/research-learning'
 
 export const researchInputLimits = {
@@ -51,6 +52,7 @@ export const researchRequestSchema = researchInputSchema
     languageCode: supportedLocale,
     searchLanguageCode: supportedLocale.optional(),
     searchConstraints: searchConstraintsSchema.optional(),
+    sourceUrls: z.array(z.string().max(4096).refine(isReadableUrl)).max(2).optional(),
     /** Root user goal preserved when retrying or recursing with a narrowed query */
     originalQuery: z.string().trim().min(1).optional(),
     learnings: z.array(researchLearningSchema).default([]),

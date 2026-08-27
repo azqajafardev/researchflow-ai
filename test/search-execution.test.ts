@@ -405,3 +405,200 @@ describe('structured search execution', () => {
     assert.equal(calls, 1)
   })
 })
+
+describe('on-demand page reading', () => {
+  const page = {
+    url,
+    content: 'The official subscription costs 17 dollars per month.',
+    sourceType: 'page' as const,
+  }
+  const request = { sourceId: 0, question: 'What does the subscription cost?' }
+  const pageFinding = {
+    url,
+    learning: 'The subscription costs 17 dollars per month.',
+    quote: page.content,
+  }
+
+  it('reads a promising snippet without date evidence and extracts from the page before rewriting', async () => {
+    mockModel([
+      { queries: [plan] },
+      {
+        learnings: [],
+        relevantUrls: [],
+        readRequests: [request],
+        rewriteQuery: 'unneeded search',
+        followUpQuestions: [],
+      },
+      { learnings: [pageFinding], relevantUrls: [url], followUpQuestions: [] },
+    ])
+    let searches = 0,
+      reads = 0
+    const search: WebSearchFunction = async () => {
+      searches++
+      return [source]
+    }
+    search.readSource = async (requested) => {
+      reads++
+      assert.equal(requested, url)
+      return page
+    }
+    const { result, steps } = await run(search)
+    assert.equal(searches, 1)
+    assert.equal(reads, 1)
+    assert.equal(result.learnings[0]?.evidence?.sourceType, 'page')
+    assert.ok(steps.some((step) => step.type === 'reading_source'))
+    assert.ok(
+      steps
+        .filter((step) => step.type === 'search_complete')
+        .every((step) => step.results.every((source) => !source.content)),
+    )
+  })
+
+  it('reads even after finding supported evidence and preserves both snippet and page findings', async () => {
+    mockModel([
+      { queries: [plan] },
+      { learnings: [finding], relevantUrls: [url], readRequests: [request], followUpQuestions: [] },
+      {
+        learnings: [pageFinding],
+        relevantUrls: [url],
+        readRequests: [request],
+        followUpQuestions: [],
+      },
+    ])
+    let reads = 0
+    const search: WebSearchFunction = async () => [source]
+    search.readSource = async () => {
+      reads++
+      return page
+    }
+    const { result } = await run(search)
+    assert.equal(reads, 1)
+    assert.deepEqual(
+      result.learnings.map((item) => item.evidence?.sourceType),
+      ['search-result', 'page'],
+    )
+  })
+
+  it('does not refetch existing pages or execute invented source IDs', async () => {
+    for (const returned of [{ ...source, sourceType: 'page' as const }, source]) {
+      mockModel([
+        { queries: [plan] },
+        {
+          learnings: [finding],
+          relevantUrls: [url],
+          readRequests: [{ ...request, sourceId: returned.sourceType ? 0 : 99 }],
+          followUpQuestions: [],
+        },
+      ])
+      const search: WebSearchFunction = async () => [returned]
+      search.readSource = async () => {
+        assert.fail('Unexpected read')
+      }
+      assert.equal((await run(search)).result.learnings.length, 1)
+    }
+  })
+
+  it('keeps verified findings if a page fails or the second extraction is malformed', async () => {
+    for (const failRead of [true, false]) {
+      mockModel([
+        { queries: [plan] },
+        {
+          learnings: [finding],
+          relevantUrls: [url],
+          readRequests: [request],
+          followUpQuestions: [],
+        },
+        ...(!failRead ? [{}] : []),
+      ])
+      const search: WebSearchFunction = async () => [source]
+      search.readSource = async () => {
+        if (failRead) throw new Error('Blocked page')
+        return page
+      }
+      const { result, steps } = await run(search)
+      assert.equal(result.learnings[0]?.learning, finding.learning)
+      assert.ok(
+        steps.some((step) => step.type === 'node_complete' && step.result?.learnings.length === 1),
+      )
+    }
+  })
+
+  it('reads a previously cited source before any search or planning call', async () => {
+    mockModel([{ learnings: [pageFinding], relevantUrls: [url], followUpQuestions: [] }])
+    const search: WebSearchFunction = async () => {
+      assert.fail('Unneeded search')
+    }
+    search.readSource = async () => page
+    const { result } = await run(search, { sourceUrls: [url] })
+    assert.equal(result.learnings[0]?.evidence?.sourceType, 'page')
+  })
+
+  it('searches when reading the cited source fails or yields no relevant evidence', async () => {
+    for (const emptyPage of [true, false]) {
+      mockModel([
+        ...(!emptyPage ? [{ learnings: [], relevantUrls: [], followUpQuestions: [] }] : []),
+        { queries: [plan] },
+        { learnings: [finding], relevantUrls: [url], followUpQuestions: [] },
+      ])
+      let searches = 0
+      const search: WebSearchFunction = async (query) => {
+        searches++
+        assert.equal(query, plan.query)
+        return [source]
+      }
+      search.readSource = async () => (emptyPage ? undefined : page)
+      assert.equal((await run(search, { sourceUrls: [url] })).result.learnings.length, 1)
+      assert.equal(searches, 1)
+    }
+  })
+
+  it('does not extract or complete after cancellation during a read', async () => {
+    mockModel([
+      { queries: [plan] },
+      { learnings: [finding], relevantUrls: [url], readRequests: [request], followUpQuestions: [] },
+    ])
+    const controller = new AbortController()
+    const search: WebSearchFunction = async () => [source]
+    search.readSource = async () => {
+      controller.abort()
+      return page
+    }
+    await assert.rejects(run(search, { signal: controller.signal }), { name: 'AbortError' })
+  })
+})
+
+it('shares the page cache with recursive research branches', async () => {
+  const page = {
+    url,
+    content: 'Official publication details for Acme.',
+    sourceType: 'page' as const,
+  }
+  const read = {
+    learnings: [],
+    relevantUrls: [],
+    readRequests: [{ sourceId: 0, question: 'Details?' }],
+    followUpQuestions: [],
+  }
+  const extracted = {
+    learnings: [{ url, learning: 'Official details', quote: page.content }],
+    relevantUrls: [url],
+    followUpQuestions: [] as string[],
+  }
+  mockModel([
+    { queries: [plan] },
+    read,
+    { ...extracted, followUpQuestions: ['Check more details'] },
+    { queries: [plan] },
+    read,
+    extracted,
+  ])
+  let calls = 0
+  const search: WebSearchFunction = async () => [source]
+  search.readSource = async () => {
+    calls++
+    return page
+  }
+  const { result } = await run(search, { maxDepth: 2 })
+  assert.equal(calls, 1)
+  assert.equal(result.learnings.length, 1)
+})

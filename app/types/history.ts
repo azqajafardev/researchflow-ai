@@ -6,6 +6,7 @@ export type ResearchHistoryNodeStatus =
   | 'generating_query'
   | 'generating_query_reasoning'
   | 'generated_query'
+  | 'reading_source'
   | 'searching'
   | 'search_complete'
   | 'processing_search_result'

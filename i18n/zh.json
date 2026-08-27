@@ -96,6 +96,7 @@
     "error": "获取反馈失败：{0}"
   },
   "webBrowsing": {
+    "readingSource": "正在读取来源正文…",
     "title": "3. 联网搜索",
     "description": "AI 将根据上述信息联网搜索并自动迭代，直到迭代次数 = depth。",
     "clickToView": "点击下面的节点查看搜索详情。",
@@ -202,6 +203,7 @@
     "useDarkTheme": "切换到深色主题"
   },
   "researchEvidence": {
+    "reading": "正在读取来源正文…",
     "title": "结论与证据",
     "close": "关闭证据面板",
     "open": "查看证据与补查",

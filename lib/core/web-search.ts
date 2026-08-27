@@ -1,3 +1,4 @@
+import { type ReadSourceFunction } from '~~/lib/core/read-source'
 import { tavily } from '@tavily/core'
 import Firecrawl, {
   type Document,
@@ -25,7 +26,10 @@ export type WebSearchOptions = SearchConstraints & {
 export type WebSearchFunction = ((
   query: string,
   options: WebSearchOptions,
-) => Promise<WebSearchResult[]>) & { provider?: ConfigWebSearchProvider }
+) => Promise<WebSearchResult[]>) & {
+  provider?: ConfigWebSearchProvider
+  readSource?: ReadSourceFunction
+}
 
 export type WebSearchConfig = {
   provider: ConfigWebSearchProvider
@@ -274,6 +278,48 @@ export async function searchWeb(
 /** Create a reusable search function bound to a fixed config snapshot. */
 export function createWebSearch(config: WebSearchConfig): WebSearchFunction {
   const search: WebSearchFunction = (query, options) => searchWeb(config, query, options)
+  search.readSource = createReadSource(config)
   search.provider = config.provider
   return search
+}
+
+/** Capability is explicit: CRW search compatibility does not imply scrape support. */
+export function createReadSource(config: WebSearchConfig): ReadSourceFunction | undefined {
+  if (config.provider === 'tavily')
+    return async (url, { signal }) => {
+      const response = await abortable(
+        tavily({ apiKey: config.apiKey }).extract([url], {
+          extractDepth: 'basic',
+          timeout: 15,
+        }),
+        signal,
+      )
+      const result = response.results[0]
+      if (!result?.rawContent) return undefined
+      return { url, finalUrl: result.url, content: result.rawContent, sourceType: 'page' }
+    }
+  if (config.provider === 'firecrawl')
+    return async (url, { signal }) => {
+      const client = new Firecrawl({
+        apiKey: config.apiKey,
+        apiUrl: resolveWebSearchApiBase('firecrawl', config.apiBase),
+      })
+      const result = await abortable(
+        client.scrape(url, {
+          formats: ['markdown'],
+          onlyMainContent: true,
+          timeout: 15_000,
+        }),
+        signal,
+      )
+      if (!result.markdown) return undefined
+      return {
+        url,
+        finalUrl: result.metadata?.sourceURL ?? url,
+        title: result.metadata?.title,
+        content: result.markdown,
+        sourceType: 'page',
+      }
+    }
+  return undefined
 }

@@ -38,6 +38,7 @@ export function useServerMode() {
     maxDepth: number
     languageCode: Locale
     searchLanguageCode?: Locale
+    sourceUrls?: string[]
     searchConstraints?: SearchConstraints
     learnings?: ResearchLearning[]
     currentDepth: number
@@ -54,6 +55,7 @@ export function useServerMode() {
       languageCode,
       searchLanguageCode,
       searchConstraints,
+      sourceUrls,
       learnings,
       currentDepth,
       nodeId,
@@ -75,6 +77,7 @@ export function useServerMode() {
         languageCode,
         searchLanguageCode,
         searchConstraints,
+        sourceUrls,
         learnings,
         currentDepth,
         nodeId,
@@ -149,6 +152,7 @@ export function useServerMode() {
           languageCode: Locale
           aiConfig: ConfigAi
           searchLanguageCode?: Locale
+          sourceUrls?: string[]
           searchConstraints?: SearchConstraints
           learnings?: ResearchLearning[]
           currentDepth: number

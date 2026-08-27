@@ -232,3 +232,95 @@ it('sends Firecrawl native news filters through the installed SDK and consumes i
     )
   }
 })
+
+import { createReadSource, createWebSearch } from '../lib/core/web-search.ts'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+it('extracts Tavily page text through the installed SDK and handles failed page results', async () => {
+  // Intercept only the SDK HTTP transport; exercise its real request/response mapping.
+  const require = createRequire(import.meta.url)
+  const sdkRequire = createRequire(require.resolve('@tavily/core'))
+  const axios = (
+    await import(
+      pathToFileURL(sdkRequire.resolve('axios/package.json').replace('package.json', 'index.js'))
+        .href
+    )
+  ).default
+  const previousAdapter = axios.defaults.adapter
+  let fail = false
+  axios.defaults.adapter = async (config: any) => {
+    const body = JSON.parse(config.data)
+    assert.deepEqual(body.urls, ['https://example.com/page'])
+    assert.equal(body.extract_depth, 'basic')
+    assert.equal(body.timeout, 15)
+    return {
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+      data: {
+        results: fail
+          ? []
+          : [{ url: 'https://example.com/final', raw_content: 'Verified page body' }],
+        failed_results: fail ? [{ url: 'https://example.com/page', error: 'Blocked' }] : [],
+      },
+    }
+  }
+  try {
+    const read = createWebSearch({ provider: 'tavily', apiKey: 'test-only' }).readSource!
+    const page = await read('https://example.com/page', {})
+    assert.equal(page?.content, 'Verified page body')
+    assert.equal(page?.url, 'https://example.com/page')
+    assert.equal(page?.finalUrl, 'https://example.com/final')
+    assert.equal(page?.sourceType, 'page')
+    fail = true
+    assert.equal(await read('https://example.com/page', {}), undefined)
+  } finally {
+    axios.defaults.adapter = previousAdapter
+  }
+  assert.equal(createReadSource({ provider: 'google-pse' }), undefined)
+  assert.equal(createReadSource({ provider: 'crw' }), undefined)
+})
+
+it('scrapes Firecrawl markdown through the installed SDK using the configured API base', async () => {
+  const server = createServer(async (req, res) => {
+    let raw = ''
+    for await (const chunk of req) raw += chunk
+    const body = JSON.parse(raw)
+    assert.equal(req.url, '/v2/scrape')
+    assert.equal(body.url, 'https://example.com/page')
+    assert.deepEqual(body.formats, ['markdown'])
+    assert.equal(body.onlyMainContent, true)
+    assert.equal(body.timeout, 15_000)
+    res.setHeader('Content-Type', 'application/json')
+    res.end(
+      JSON.stringify({
+        success: true,
+        data: {
+          markdown: 'Official body',
+          metadata: { title: 'Official page', sourceURL: 'https://example.com/final' },
+        },
+      }),
+    )
+  }).listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  try {
+    const { port } = server.address() as { port: number }
+    const read = createReadSource({
+      provider: 'firecrawl',
+      apiKey: 'test-only',
+      apiBase: `http://127.0.0.1:${port}`,
+    })!
+    assert.deepEqual(await read('https://example.com/page', {}), {
+      url: 'https://example.com/page',
+      finalUrl: 'https://example.com/final',
+      title: 'Official page',
+      content: 'Official body',
+      sourceType: 'page',
+    })
+  } finally {
+    server.closeAllConnections()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  }
+})
