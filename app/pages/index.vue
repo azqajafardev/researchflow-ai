@@ -61,6 +61,13 @@
           :disabled="!canRegenerateReport"
           :query="form.query"
           :result="researchResult"
+          :refine-disabled="isRunning || !session.report"
+          :refining="refinement.pending.value"
+          :refinement-stage="refinement.stage.value"
+          :refinement-error="refinement.error.value"
+          :refinement-success="refinement.success.value"
+          @refine="refinement.refine"
+          @cancel-refinement="cancelActiveOperation"
           @regenerate="regenerateReport"
         />
       </div>
@@ -105,6 +112,7 @@
     learnings: [],
   })
 
+  const researchSession = useResearchSession()
   const {
     state: session,
     isRunning,
@@ -125,7 +133,7 @@
     timeoutOperation,
     loadHistory,
     isCurrentOperation,
-  } = useResearchSession()
+  } = researchSession
   const { addHistoryItem, updateHistoryItem } = useHistory()
   const operationRuntime = useResearchOperationRuntime({
     timeouts: {
@@ -135,6 +143,19 @@
     },
     onTimeout(lease, phase) {
       timeoutOperation(lease, phase, t('researchSession.timeoutMessage'))
+    },
+  })
+
+  const refinement = useResearchRefinement({
+    session: researchSession,
+    runtime: operationRuntime,
+    getGraph: () => deepResearchRef.value?.exportGraph(),
+    onComplete(report, graph) {
+      researchResult.value = {
+        learnings: researchSession.state.value.result.learnings.map((item) => ({ ...item })),
+      }
+      reportRef.value?.displayReport(report, true)
+      deepResearchRef.value?.importGraph(graph)
     },
   })
 
@@ -173,6 +194,7 @@
     if (!lease) return
     const signal = operationRuntime.start(lease, 'feedback')
 
+    refinement.reset()
     deepResearchRef.value?.clear()
     reportRef.value?.displayReport('')
     researchResult.value = { learnings: [] }
@@ -326,6 +348,7 @@
 
   function loadHistoryItem(item: ResearchHistoryItem) {
     if (!loadHistory(item)) return
+    refinement.reset()
     feedbackRef.value?.clear()
     reportRef.value?.displayReport('')
 

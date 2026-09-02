@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { collectResearchResult } from '../app/utils/research-result.ts'
 
 describe('research result collection', () => {
-  it('combines retried and unaffected graph branches by URL', () => {
+  it('keeps different findings from the same URL across branches', () => {
     const result = collectResearchResult([
       {
         learnings: [
@@ -21,8 +21,9 @@ describe('research result collection', () => {
 
     assert.deepEqual(result.learnings, [
       { url: 'https://example.com/a', learning: 'Unaffected branch' },
-      { url: 'https://example.com/shared', learning: 'Newer duplicate' },
+      { url: 'https://example.com/shared', learning: 'Older duplicate' },
       { url: 'https://example.com/b', learning: 'Retried branch' },
+      { url: 'https://example.com/shared', learning: 'Newer duplicate' },
     ])
   })
 })

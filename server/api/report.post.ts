@@ -1,20 +1,29 @@
 import { writeFinalReport } from '~~/lib/core/deep-research'
 import type { ConfigAi } from '~~/shared/types/config'
 import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
+import { z } from 'zod'
+import { researchLearningSchema } from '~~/shared/utils/research-learning'
+import { reportRevisionSchema } from '~~/shared/utils/report-revision'
 
 export default defineEventHandler(async (event) => {
   const runtimeConfig = useRuntimeConfig()
   const body = await readBody(event)
 
-  const { prompt, learnings, language } = body
-
-  // Validate required parameters
-  if (!prompt || !learnings || !language) {
+  const parsed = z
+    .object({
+      prompt: z.string().min(1),
+      learnings: z.array(researchLearningSchema).min(1),
+      language: z.string().min(1),
+      revision: reportRevisionSchema.optional(),
+    })
+    .safeParse(body)
+  if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing required parameters',
+      statusMessage: 'Invalid report parameters',
     })
   }
+  const { prompt, learnings, language, revision } = parsed.data
 
   // Create server-side configuration
   const serverConfig: ConfigAi = {
@@ -46,6 +55,7 @@ export default defineEventHandler(async (event) => {
           language,
           aiConfig: serverConfig,
           signal: requestAbort.signal,
+          revision,
         })
 
         for await (const chunk of reportGenerator.fullStream) {

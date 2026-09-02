@@ -196,5 +196,28 @@
     "hidePassword": "Wachtwoord verbergen",
     "useLightTheme": "Licht thema gebruiken",
     "useDarkTheme": "Donker thema gebruiken"
+  },
+  "researchEvidence": {
+    "title": "Conclusies en bewijs",
+    "close": "Bewijspaneel sluiten",
+    "open": "Bewijs bekijken en verder onderzoeken",
+    "finding": "Selecteer een bronverwijzing",
+    "page": "Webpaginainhoud",
+    "searchResult": "Zoekinhoud",
+    "excerpt": "Bronfragment",
+    "excerptHelp": "Dit fragment is vergeleken met de opgehaalde inhoud. Bekijk de context om te beoordelen of het de conclusie ondersteunt.",
+    "retrievedAt": "Opgehaald: {date}",
+    "missing": "Er is geen passend bronfragment opgeslagen. Open de bron of start vervolgonderzoek voor nieuw bewijs.",
+    "request": "Wat moet verder worden onderzocht?",
+    "scope": "Onderzoek deze vraag, werk alleen verwijzende blokken bij (tabellen en lijsten als geheel) en sla een nieuw geschiedenisitem op.",
+    "placeholder": "Bijvoorbeeld: Deze prijs is mogelijk verouderd. Controleer de nieuwste officiële prijs en voorwaarden.",
+    "submit": "Onderzoeken en rapport bijwerken",
+    "searching": "Aanvullend bewijs zoeken…",
+    "revising": "Gerelateerde blokken controleren en bijwerken…",
+    "cancel": "Vervolgonderzoek annuleren",
+    "saved": "Vervolgonderzoek apart opgeslagen. Het oorspronkelijke rapport blijft in de geschiedenis beschikbaar.",
+    "failed": "Vervolgonderzoek kon niet worden voltooid. Het oorspronkelijke rapport is behouden. {message}",
+    "cancelled": "Vervolgonderzoek gestopt. Het oorspronkelijke rapport is behouden.",
+    "historyTitle": "{query} (vervolgonderzoek)"
   }
 }

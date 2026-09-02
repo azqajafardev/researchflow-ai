@@ -15,6 +15,15 @@ import type {
 
 export type ResearchSessionEvent =
   | {
+      type: 'REFINEMENT_SUCCEEDED'
+      sessionId: string
+      operationId: string
+      historyId: string
+      result: ResearchResult
+      report: string
+      at: string
+    }
+  | {
       type: 'BEGIN_FEEDBACK'
       sessionId: string
       operationId: string
@@ -131,7 +140,8 @@ export function canRegenerateReportFromSession(
     !!state.historyId &&
     state.result.learnings.length > 0 &&
     (state.status === 'completed' ||
-      (['failed', 'cancelled', 'timed-out'].includes(state.status) && state.phase === 'report'))
+      (['failed', 'cancelled', 'timed-out'].includes(state.status) &&
+        (state.phase === 'report' || state.phase === 'research')))
   )
 }
 
@@ -160,9 +170,8 @@ function snapshotFeedback(
 function snapshotResult(result: ResearchResult): ResearchResult {
   return {
     learnings: result.learnings.map((learning) => ({
-      url: learning.url,
-      title: learning.title,
-      learning: learning.learning,
+      ...learning,
+      ...(learning.evidence ? { evidence: { ...learning.evidence } } : {}),
     })),
   }
 }
@@ -196,6 +205,21 @@ export function researchSessionReducer(
   event: ResearchSessionEvent,
 ): ResearchSession {
   switch (event.type) {
+    case 'REFINEMENT_SUCCEEDED':
+      if (!isRunningOperation(state, event) || state.phase !== 'research') return state
+      return revise(
+        state,
+        {
+          operationId: undefined,
+          status: 'completed',
+          phase: 'report',
+          historyId: event.historyId,
+          result: snapshotResult(event.result),
+          report: event.report,
+          failure: undefined,
+        },
+        event.at,
+      )
     case 'BEGIN_FEEDBACK':
       if (!canBeginFeedbackFromSession(state)) {
         return state
@@ -528,6 +552,23 @@ export function useResearchSession(options: UseResearchSessionOptions = {}) {
     })
   }
 
+  function completeRefinement(
+    lease: ResearchOperationLease,
+    result: ResearchResult,
+    report: string,
+    historyId: string,
+  ) {
+    commit({
+      type: 'REFINEMENT_SUCCEEDED',
+      sessionId: lease.sessionId,
+      operationId: lease.operationId,
+      result,
+      report,
+      historyId,
+      at: now(),
+    })
+  }
+
   function failOperation(lease: ResearchOperationLease, failure: ResearchFailure) {
     commit({
       type: 'OPERATION_FAILED',
@@ -601,6 +642,7 @@ export function useResearchSession(options: UseResearchSessionOptions = {}) {
     completeResearch,
     beginReport,
     completeReport,
+    completeRefinement,
     failOperation,
     requestCancellation,
     completeCancellation,

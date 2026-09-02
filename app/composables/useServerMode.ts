@@ -4,6 +4,8 @@ import { writeFinalReport as clientWriteFinalReport } from '~~/lib/core/deep-res
 import type { ResearchStep } from '~~/lib/core/deep-research'
 import { OperationTimeoutError } from '~~/shared/utils/abort'
 import { parseSSEStream } from '~/utils/sse'
+import type { ResearchLearning } from '~~/shared/types/research-session'
+import type { WriteFinalReportParams } from '~~/lib/core/deep-research'
 
 function throwIfTimeoutFrame(value: unknown) {
   if (!value || typeof value !== 'object') return
@@ -35,7 +37,7 @@ export function useServerMode() {
     maxDepth: number
     languageCode: Locale
     searchLanguageCode?: Locale
-    learnings?: Array<{ url: string; learning: string }>
+    learnings?: ResearchLearning[]
     currentDepth: number
     nodeId?: string
     retryNode?: any
@@ -109,14 +111,8 @@ export function useServerMode() {
     }
   }
 
-  const serverWriteFinalReport = async (params: {
-    prompt: string
-    learnings: Array<{ url: string; learning: string }>
-    language: string
-    aiConfig: ConfigAi
-    signal?: AbortSignal
-  }) => {
-    const { prompt, learnings, language, signal } = params
+  const serverWriteFinalReport = async (params: WriteFinalReportParams) => {
+    const { prompt, learnings, language, signal, revision } = params
 
     const response = await fetch('/api/report', {
       method: 'POST',
@@ -127,6 +123,7 @@ export function useServerMode() {
         prompt,
         learnings,
         language,
+        revision,
       }),
       signal,
     })
@@ -148,7 +145,7 @@ export function useServerMode() {
           languageCode: Locale
           aiConfig: ConfigAi
           searchLanguageCode?: Locale
-          learnings?: Array<{ url: string; learning: string }>
+          learnings?: ResearchLearning[]
           currentDepth: number
           nodeId?: string
           retryNode?: any

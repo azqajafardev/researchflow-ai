@@ -200,5 +200,28 @@
     "hidePassword": "隐藏密码",
     "useLightTheme": "切换到浅色主题",
     "useDarkTheme": "切换到深色主题"
+  },
+  "researchEvidence": {
+    "title": "结论与证据",
+    "close": "关闭证据面板",
+    "open": "查看证据与补查",
+    "finding": "选择报告引用",
+    "page": "网页正文",
+    "searchResult": "检索内容",
+    "excerpt": "来源摘录",
+    "excerptHelp": "摘录已与本次检索内容匹配；是否充分支持结论仍需结合上下文判断。",
+    "retrievedAt": "检索时间：{date}",
+    "missing": "这条结论没有保存可匹配的原文摘录。可以打开来源核对，或发起补查获取新证据。",
+    "request": "需要进一步查清什么？",
+    "scope": "补查会搜索这个问题，只更新引用该结论的段落（表格、列表按整块更新），并另存研究记录。",
+    "placeholder": "例如：这个价格可能过时了，请查找官方最新价格，并核对适用条件。",
+    "submit": "补查并更新报告",
+    "searching": "正在搜索补充证据…",
+    "revising": "正在核对并更新相关段落…",
+    "cancel": "取消补查",
+    "saved": "补查完成，已另存研究记录。原报告保留在历史记录中。",
+    "failed": "补查未完成，原报告已保留。{message}",
+    "cancelled": "补查已停止，原报告已保留。",
+    "historyTitle": "{query}（补查）"
   }
 }

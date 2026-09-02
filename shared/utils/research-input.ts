@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { researchLearningSchema } from '~~/shared/utils/research-learning'
 
 export const researchInputLimits = {
   numQuestions: { min: 1, max: 5 },
@@ -50,14 +51,7 @@ export const researchRequestSchema = researchInputSchema
     searchLanguageCode: supportedLocale.optional(),
     /** Root user goal preserved when retrying or recursing with a narrowed query */
     originalQuery: z.string().trim().min(1).optional(),
-    learnings: z
-      .array(
-        z.object({
-          url: z.string(),
-          learning: z.string(),
-        }),
-      )
-      .default([]),
+    learnings: z.array(researchLearningSchema).default([]),
     currentDepth: boundedInteger(
       researchInputLimits.depth.min,
       researchInputLimits.depth.max,

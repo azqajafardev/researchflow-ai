@@ -30,6 +30,11 @@ export interface ResearchLearning {
   url: string
   title?: string
   learning: string
+  evidence?: {
+    excerpt: string
+    retrievedAt: string
+    sourceType: 'page' | 'search-result'
+  }
 }
 
 export interface ResearchResult {

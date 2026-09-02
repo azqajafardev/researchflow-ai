@@ -4,6 +4,7 @@ import {
   escapePromptAttribute,
   finalizeLearningsFromSearchResults,
 } from '../shared/utils/search-learning.ts'
+import { deduplicateLearnings } from '../shared/utils/research-learning.ts'
 
 describe('finalizeLearningsFromSearchResults', () => {
   const results = [
@@ -31,6 +32,44 @@ describe('finalizeLearningsFromSearchResults', () => {
 
   it('returns an empty list when learnings are missing', () => {
     assert.deepEqual(finalizeLearningsFromSearchResults(undefined, results), [])
+  })
+
+  it('saves only excerpts matched against retrieved source content', () => {
+    const source = {
+      url: 'https://example.com/a',
+      title: 'A',
+      content: 'The current price\nis 12 per month.',
+      sourceType: 'page' as const,
+    }
+    const findings = finalizeLearningsFromSearchResults(
+      [
+        { url: source.url, learning: 'Price is 12', quote: 'The current price is 12 per month.' },
+        { url: source.url, learning: 'Unsupported', quote: 'The current price is 99 per month.' },
+      ],
+      [source],
+      '2026-09-07T00:00:00Z',
+    )
+    assert.deepEqual(findings[0].evidence, {
+      excerpt: 'The current price is 12 per month.',
+      sourceType: 'page',
+      retrievedAt: '2026-09-07T00:00:00Z',
+    })
+    assert.equal(findings[1].evidence, undefined)
+  })
+
+  it('deduplicates repeated facts without losing other facts or evidence', () => {
+    const evidence = {
+      excerpt: 'The current price is 12.',
+      sourceType: 'page' as const,
+      retrievedAt: '2026-09-07',
+    }
+    const findings = deduplicateLearnings([
+      { url: 'a', learning: 'Price is 12', evidence },
+      { url: 'a', learning: 'Supports local deployment' },
+      { url: 'a', learning: 'Price is 12' },
+    ])
+    assert.equal(findings.length, 2)
+    assert.deepEqual(findings[0].evidence, evidence)
   })
 })
 

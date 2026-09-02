@@ -52,6 +52,7 @@ function mapFirecrawlResults(
     .filter((r) => !!r.markdown && !!(r.url ?? r.metadata?.sourceURL))
     .map((r) => ({
       content: r.markdown!,
+      sourceType: 'page' as const,
       url: (r.url ?? r.metadata?.sourceURL)!,
       title: r.title ?? r.metadata?.title,
     }))
@@ -128,6 +129,7 @@ async function searchWithGooglePse(
 
     return data.items.map((item) => ({
       content: item.snippet,
+      sourceType: 'search-result' as const,
       url: item.link,
       title: item.title,
     }))
@@ -159,6 +161,7 @@ async function searchWithTavily(
     .filter((x) => !!x?.content && !!x.url)
     .map((r) => ({
       content: r.content,
+      sourceType: 'search-result' as const,
       url: r.url,
       title: r.title,
     }))

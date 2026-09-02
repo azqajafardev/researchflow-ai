@@ -200,5 +200,28 @@
     "hidePassword": "Hide password",
     "useLightTheme": "Use light theme",
     "useDarkTheme": "Use dark theme"
+  },
+  "researchEvidence": {
+    "title": "Findings and evidence",
+    "close": "Close evidence panel",
+    "open": "Inspect evidence and follow up",
+    "finding": "Select a report citation",
+    "page": "Page content",
+    "searchResult": "Search content",
+    "excerpt": "Source excerpt",
+    "excerptHelp": "This excerpt was matched against retrieved content. Check the context to assess whether it supports the finding.",
+    "retrievedAt": "Retrieved: {date}",
+    "missing": "No matching source excerpt was saved for this finding. Open the source or run a follow-up to collect new evidence.",
+    "request": "What should we check?",
+    "scope": "Search this question, update only blocks citing this finding (tables and lists as whole blocks), and save a separate history entry.",
+    "placeholder": "For example: This price may be outdated. Check the latest official price and its conditions.",
+    "submit": "Research and update report",
+    "searching": "Searching for supporting evidence…",
+    "revising": "Checking and updating related blocks…",
+    "cancel": "Cancel follow-up",
+    "saved": "Follow-up saved as a separate history entry. The original report is still available in history.",
+    "failed": "Follow-up could not finish. The original report was kept. {message}",
+    "cancelled": "Follow-up stopped. The original report was kept.",
+    "historyTitle": "{query} (follow-up)"
   }
 }

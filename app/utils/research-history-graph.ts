@@ -1,3 +1,4 @@
+import { researchLearningSchema } from '~~/shared/utils/research-learning'
 import { z } from 'zod'
 import { createFlowEdge, createFlowNode } from '~/utils/research-graph'
 import { parentNodeId } from '~/utils/tree-node'
@@ -20,12 +21,6 @@ const researchHistorySearchResultSchema = z.object({
   title: z.string().optional(),
 })
 
-const researchHistoryLearningSchema = z.object({
-  url: z.string(),
-  title: z.string().optional(),
-  learning: z.string(),
-})
-
 export const researchHistoryGraphNodeSchema = z.object({
   id: z.string().min(1),
   label: z.string(),
@@ -33,7 +28,7 @@ export const researchHistoryGraphNodeSchema = z.object({
   generateQueriesReasoning: z.string().optional(),
   generateLearningsReasoning: z.string().optional(),
   searchResults: z.array(researchHistorySearchResultSchema).optional(),
-  learnings: z.array(researchHistoryLearningSchema).optional(),
+  learnings: z.array(researchLearningSchema).optional(),
   status: researchHistoryNodeStatusSchema.optional(),
   error: z.string().optional(),
 })
@@ -66,9 +61,7 @@ export function serializeResearchHistoryNode(node: {
     generateQueriesReasoning: node.generateQueriesReasoning,
     generateLearningsReasoning: node.generateLearningsReasoning,
     // Persist only URL metadata for visited pages to keep localStorage small.
-    searchResults: node.searchResults?.map(({ url, title }) =>
-      title ? { url, title } : { url },
-    ),
+    searchResults: node.searchResults?.map(({ url, title }) => (title ? { url, title } : { url })),
     learnings: node.learnings?.map((learning) => ({ ...learning })),
     status: node.status,
     error: node.error,

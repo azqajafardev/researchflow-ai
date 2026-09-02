@@ -7,4 +7,5 @@ export type WebSearchResult = {
   content: string
   url: string
   title?: string
+  sourceType?: 'page' | 'search-result'
 }

@@ -1,4 +1,5 @@
 import type { ResearchLearning, ResearchResult } from '~~/shared/types/research-session'
+import { deduplicateLearnings } from '~~/shared/utils/research-learning'
 
 export function collectResearchResult(
   results: Array<{ learnings?: Array<Partial<ResearchLearning>> }>,
@@ -11,6 +12,6 @@ export function collectResearchResult(
     )
 
   return {
-    learnings: [...new Map(learnings.map((learning) => [learning.url, learning])).values()],
+    learnings: deduplicateLearnings(learnings),
   }
 }

@@ -1,3 +1,4 @@
+import { researchLearningSchema } from '~~/shared/utils/research-learning'
 import { z } from 'zod'
 import { createRuntimeId } from '~~/shared/utils/id'
 import { researchHistoryGraphSchema } from '~/utils/research-history-graph'
@@ -11,12 +12,6 @@ import type {
 const researchFeedbackSchema = z.object({
   assistantQuestion: z.string(),
   userAnswer: z.string(),
-})
-
-const researchLearningSchema = z.object({
-  url: z.string(),
-  title: z.string().optional(),
-  learning: z.string(),
 })
 
 export const researchHistoryItemSchema = z.object({

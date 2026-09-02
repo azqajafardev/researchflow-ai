@@ -4,6 +4,12 @@
 
 This is a web UI for https://github.com/dzhng/deep-research, with several improvements and fixes.
 
+### Evidence inspection and focused follow-ups
+
+Click a report citation or **Inspect evidence and follow up** to see its finding, source, retrieval time, and saved excerpt. Excerpts are stored only after matching retrieved content; page content and search results are labeled separately. Matching an excerpt does not establish that it fully supports the finding.
+
+Ask a focused follow-up to search up to two directions in one round and update only Markdown blocks citing that finding (whole tables and lists are treated as blocks). Successful follow-ups append evidence with stable citation numbers and save a separate history entry. Failures, cancellation, or missing matched excerpts leave the original report intact. This works in both client and server modes, and older history entries remain supported. History is still browser-local; export important research.
+
 Features:
 
 - 🚀 **Safe & Secure**: In Client Mode, config and API requests stay in your browser locally

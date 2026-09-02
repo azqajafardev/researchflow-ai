@@ -71,4 +71,22 @@ describe('history-backed research sessions', () => {
       /Invalid history item format/,
     )
   })
+
+  it('round trips evidence in new history and accepts older history without it', () => {
+    const learning = {
+      ...research.learnings[0],
+      evidence: {
+        excerpt: 'The source supports this result.',
+        sourceType: 'page' as const,
+        retrievedAt: '2026-09-07T00:00:00Z',
+      },
+    }
+    const item = createResearchHistoryItem({ ...research, learnings: [learning] })
+    assert.deepEqual(parseImportedHistoryItem(JSON.parse(JSON.stringify(item))).learnings, [
+      learning,
+    ])
+    assert.deepEqual(normalizeStoredHistory({ items: [item] }).items[0].learnings, [learning])
+    const legacy = createResearchHistoryItem(research)
+    assert.deepEqual(parseImportedHistoryItem(legacy).learnings, research.learnings)
+  })
 })

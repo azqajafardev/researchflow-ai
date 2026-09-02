@@ -2,6 +2,8 @@
   import { useServerMode } from '~/composables/useServerMode'
   import { createCitationHtml, renderSafeMarkdown } from '~/utils/markdown'
   import { getStreamErrorMessage } from '~~/shared/utils/stream-error'
+  import type ResearchEvidence from './ResearchEvidence.vue'
+  import type { RefinementRequest } from '~/utils/research-refinement'
   import type {
     ResearchFeedbackSnapshot,
     ResearchInputSnapshot,
@@ -20,11 +22,18 @@
     disabled?: boolean
     query: string
     result: ResearchResult
+    refineDisabled?: boolean
+    refining?: boolean
+    refinementStage?: 'searching' | 'revising'
+    refinementError?: string
+    refinementSuccess?: string
   }>()
 
   const emit = defineEmits<{
     (e: 'complete', report: string): void
     (e: 'regenerate'): void
+    (e: 'refine', request: RefinementRequest): void
+    (e: 'cancel-refinement'): void
   }>()
 
   const { t, locale } = useI18n()
@@ -39,6 +48,41 @@
   const reasoningContent = ref('')
   const reportContent = ref('')
   const reportContainerRef = ref<HTMLElement>()
+  const evidencePanel = useTemplateRef<InstanceType<typeof ResearchEvidence>>('evidencePanel')
+  const evidenceVisible = shallowRef(false)
+  const selectedLearningIndex = shallowRef(0)
+  const citedIndices = computed(() =>
+    [
+      ...new Set(
+        [...reportContent.value.matchAll(/\[(\d+)\](?!\()/g)].map((match) => Number(match[1]) - 1),
+      ),
+    ].filter((index) => index >= 0 && index < props.result.learnings.length),
+  )
+  watch(citedIndices, (indices) => {
+    if (!indices.includes(selectedLearningIndex.value)) {
+      selectedLearningIndex.value = indices[0] ?? 0
+    }
+  })
+
+  async function showEvidence(index = citedIndices.value[0]) {
+    if (index === undefined || !props.result.learnings[index] || props.refining) return
+    selectedLearningIndex.value = index
+    evidenceVisible.value = true
+    await nextTick()
+    evidencePanel.value?.focus()
+  }
+
+  function handleReportClick(event: MouseEvent) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+    const anchor = (event.target as HTMLElement).closest('.citation-ref a')
+    if (!anchor) return
+    const number = Number(anchor.textContent?.match(/\[(\d+)\]/)?.[1])
+    if (number > 0 && props.result.learnings[number - 1]) {
+      event.preventDefault()
+      removeTooltip()
+      showEvidence(number - 1)
+    }
+  }
 
   const isExportButtonDisabled = computed(
     () =>
@@ -277,13 +321,14 @@
     }
   }
 
-  function displayReport(report: string) {
+  function displayReport(report: string, keepEvidence = false) {
     activeReport += 1
     // 直接显示已有的报告内容
     reportContent.value = report
     reasoningContent.value = '' // 清空推理内容，因为不是新生成的
     loading.value = false
     error.value = ''
+    if (!keepEvidence) evidenceVisible.value = false
   }
 
   defineExpose({
@@ -313,7 +358,16 @@
 
     <UAlert v-if="error" :title="error" color="error" variant="soft" />
 
-    <div class="flex mb-4 justify-end">
+    <div class="flex flex-wrap gap-1 mb-4 justify-end">
+      <UButton
+        v-if="citedIndices.length"
+        variant="ghost"
+        icon="i-lucide-book-open-check"
+        size="sm"
+        :disabled="loading || refining"
+        @click="showEvidence()"
+        >{{ $t('researchEvidence.open') }}</UButton
+      >
       <UButton
         color="info"
         variant="ghost"
@@ -338,6 +392,22 @@
       </UButton>
     </div>
 
+    <ResearchEvidence
+      v-if="evidenceVisible"
+      ref="evidencePanel"
+      v-model="selectedLearningIndex"
+      :learnings="result.learnings"
+      :cited-indices="citedIndices"
+      :disabled="refineDisabled || loading"
+      :pending="refining"
+      :stage="refinementStage"
+      :error="refinementError"
+      :success="refinementSuccess"
+      @refine="emit('refine', $event)"
+      @cancel="emit('cancel-refinement')"
+      @close="evidenceVisible = false"
+    />
+
     <ReasoningAccordion
       v-if="reasoningContent"
       v-model="reasoningContent"
@@ -349,6 +419,7 @@
       ref="reportContainerRef"
       v-if="reportContent"
       class="prose prose-sm max-w-none break-words p-6 bg-gray-50 dark:bg-gray-800 dark:prose-invert dark:text-white rounded-lg shadow"
+      @click="handleReportClick"
       v-html="reportHtml"
     />
     <div v-else>
