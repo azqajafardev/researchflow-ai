@@ -92,7 +92,8 @@
     "nodeFailed": "Zoeken mislukt",
     "nodeFailedToast": "Zoekknooppunt \"{label}\" is mislukt",
     "followUpQuestions": "Vervolgvragen",
-    "retry": "Opnieuw proberen"
+    "retry": "Opnieuw proberen",
+    "noSearchResult": "Geen zoekresultaten gevonden"
   },
   "researchReport": {
     "title": "4. Onderzoeksrapport",

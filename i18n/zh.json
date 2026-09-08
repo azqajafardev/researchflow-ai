@@ -92,7 +92,8 @@
     "nodeFailed": "搜索失败",
     "nodeFailedToast": "搜索步骤 “{label}” 失败",
     "followUpQuestions": "后续问题",
-    "retry": "重试"
+    "retry": "重试",
+    "noSearchResult": "未找到搜索结果"
   },
   "researchReport": {
     "title": "4. 研究报告",

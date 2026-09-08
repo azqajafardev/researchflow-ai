@@ -92,7 +92,8 @@
     "nodeFailed": "Search failed",
     "nodeFailedToast": "Search node \"{label}\" failed",
     "followUpQuestions": "Follow-up Questions",
-    "retry": "Retry"
+    "retry": "Retry",
+    "noSearchResult": "No search results found"
   },
   "researchReport": {
     "title": "4. Research Report",

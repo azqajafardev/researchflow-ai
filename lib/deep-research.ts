@@ -384,6 +384,9 @@ export async function deepResearch({
               maxResults: 5,
               lang: languageCode,
             })
+            if (!results.length) {
+              throw new Error(t('webBrowsing.noSearchResult'))
+            }
             console.log(
               `[DeepResearch] Searched "${searchQuery.query}", found ${results.length} contents`,
             )
