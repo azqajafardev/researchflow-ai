@@ -1,9 +1,10 @@
-import { getEncoding } from 'js-tiktoken'
+import { Tiktoken } from 'js-tiktoken/lite'
+import o200kBase from 'js-tiktoken/ranks/o200k_base'
 
 import { RecursiveCharacterTextSplitter } from '~~/lib/ai/text-splitter'
 
 const MinChunkSize = 140
-const encoder = getEncoding('o200k_base')
+const encoder = new Tiktoken(o200kBase)
 
 export const countTokens = (text: string) => encoder.encode(text).length
 

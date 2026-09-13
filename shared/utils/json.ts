@@ -43,6 +43,21 @@ export async function* parseStreamingJson<T extends z.ZodType>(
 ): AsyncGenerator<ParseStreamingJsonEvent<z.infer<T>>> {
   let rawText = ''
   let hasValidObject = false
+  let parsedLength = 0
+  let lastParsedAt = -Infinity
+
+  function parsePendingText(): ParseStreamingJsonEvent<z.infer<T>> | undefined {
+    if (rawText.length === parsedLength) return
+    parsedLength = rawText.length
+    lastParsedAt = performance.now()
+    const parsed = parsePartialJson(removeJsonMarkdown(rawText))
+    const isParseSuccessful =
+      parsed.state === 'repaired-parse' || parsed.state === 'successful-parse'
+    if (isParseSuccessful && isValid(parsed.value as any)) {
+      hasValidObject = true
+      return { type: 'object', value: parsed.value as DeepPartial<z.infer<T>> }
+    }
+  }
 
   for await (const chunk of fullStream) {
     if (chunk.type === 'reasoning') {
@@ -58,19 +73,18 @@ export async function* parseStreamingJson<T extends z.ZodType>(
     }
     if (chunk.type === 'text-delta') {
       rawText += chunk.textDelta
-      const parsed = parsePartialJson(removeJsonMarkdown(rawText))
-
-      const isParseSuccessful =
-        parsed.state === 'repaired-parse' || parsed.state === 'successful-parse'
-      if (isParseSuccessful && isValid(parsed.value as any)) {
-        hasValidObject = true
-        yield {
-          type: 'object',
-          value: parsed.value as DeepPartial<z.infer<T>>,
-        }
+      // Coalesce fast deltas before parsing and emitting the entire accumulated object.
+      // Check on arrival so errors, reasoning, and upstream cancellation never wait on a timer.
+      if (performance.now() - lastParsedAt >= 50) {
+        const event = parsePendingText()
+        if (event) yield event
       }
     }
   }
+
+  // Flush the final text even when the stream finishes inside the update interval.
+  const finalEvent = parsePendingText()
+  if (finalEvent) yield finalEvent
 
   // Fail when JSON never became valid — including successful parses like `{}`
   // that do not satisfy the caller's isValid predicate.

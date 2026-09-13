@@ -4,10 +4,10 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "build:optimize": "node scripts/build.js",
+    "build:optimize": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "generate:optimize": "node scripts/build.js --generate",
+    "generate:optimize": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "format": "prettier --write app server lib shared",

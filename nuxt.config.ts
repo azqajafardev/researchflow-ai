@@ -97,6 +97,16 @@ export default defineNuxtConfig({
     // SDK without trying to resolve undici. Server (Nitro) keeps the real one.
     'vite:extendConfig'(config, { isClient }) {
       if (isClient) {
+        config.plugins ||= []
+        config.plugins.push({
+          name: 'tavily-tokenizer',
+          enforce: 'pre',
+          resolveId(source, importer) {
+            if (source === 'js-tiktoken' && importer?.includes('/@tavily/core/')) {
+              return fileURLToPath(new URL('./build/tavily-tokenizer.ts', import.meta.url))
+            }
+          },
+        })
         config.resolve ||= {}
         config.resolve.alias = {
           ...config.resolve.alias,
