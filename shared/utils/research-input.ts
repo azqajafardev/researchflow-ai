@@ -7,7 +7,21 @@ export const researchInputLimits = {
 } as const
 
 const requiredText = z.string().trim().min(1)
-const supportedLocale = z.enum(['en', 'zh', 'nl'])
+const SUPPORTED_LOCALES = ['en', 'zh', 'nl'] as const
+
+/**
+ * Browsers/OSes commonly report region-qualified locales such as `en-US`,
+ * `zh-CN` or `nl_NL` (e.g. via `navigator.language` or the `Accept-Language`
+ * header). Normalize these to their base language so requests aren't
+ * rejected just because a region suffix is present.
+ */
+function normalizeLocale(value: unknown): unknown {
+  if (typeof value !== 'string') return value
+  const base = value.trim().split(/[-_]/)[0]?.toLowerCase()
+  return base ?? value
+}
+
+const supportedLocale = z.preprocess(normalizeLocale, z.enum(SUPPORTED_LOCALES))
 const boundedInteger = (min: number, max: number) =>
   z.preprocess(
     (value) => (typeof value === 'string' && value.trim() !== '' ? Number(value.trim()) : value),

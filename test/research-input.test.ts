@@ -77,6 +77,33 @@ describe('research input validation', () => {
     )
   })
 
+  it('normalizes region-qualified locales (e.g. en-US) to their base language', () => {
+    const parsed = researchRequestSchema.safeParse({
+      query: 'topic',
+      breadth: 2,
+      depth: 2,
+      languageCode: 'en-US',
+      searchLanguageCode: 'zh_CN',
+    })
+    assert.equal(parsed.success, true)
+    if (parsed.success) {
+      assert.equal(parsed.data.languageCode, 'en')
+      assert.equal(parsed.data.searchLanguageCode, 'zh')
+    }
+  })
+
+  it('rejects locales that do not map to a supported language', () => {
+    assert.equal(
+      researchRequestSchema.safeParse({
+        query: 'topic',
+        breadth: 2,
+        depth: 2,
+        languageCode: 'fr-FR',
+      }).success,
+      false,
+    )
+  })
+
   it('accepts optional originalQuery for narrowed retries', () => {
     const parsed = researchRequestSchema.safeParse({
       query: 'narrowed follow-up',
