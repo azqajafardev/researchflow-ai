@@ -6,7 +6,7 @@ This is a web UI for https://github.com/dzhng/deep-research, with several improv
 
 Features:
 
-- 🚀 **Safe & Secure**: Everything (config, API requests, ...) stays in your browser locally
+- 🚀 **Safe & Secure**: In Client Mode, config and API requests stay in your browser locally
 - 🕙 **Realtime feedback**: Stream AI responses and reflect on the UI in real-time
 - 🌳 **Search visualization**: Shows the research process using a tree structure. Supports searching in different languages
 - 📄 **Export as PDF**: Export the final research report as Markdown / PDF
@@ -16,8 +16,8 @@ Features:
 
 Currently available providers:
 
-- AI: OpenAI compatible, SiliconFlow, Infiniai, DeepSeek, OpenRouter, Ollama and more
-- Web Search: Tavily (1000 free credits / month), Firecrawl (cloud / self-hosted)
+- AI: OpenAI compatible, SiliconFlow, InfiniAI, DeepSeek, OpenRouter, Ollama and more
+- Web Search: Tavily (1000 free credits / month), Firecrawl (cloud / self-hosted), Google PSE
 
 Please give a 🌟 Star if you like this project!
 
@@ -55,7 +55,7 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 
 25/03/09
 
-- Added: InifiniAI support
+- Added: InfiniAI support
 - Improved LLM prompts
 - Improved error handling
 - Improved: Try to fetch model list even when no API key is provided
@@ -71,7 +71,7 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 25/02/24
 
 - Added: Fullscreen mode for the search flow. This helps you to focus on the search process better.
-- Changed: "Export PDF" now uses the browser's native print ability. This fixes layout issues and emilinates font problems.
+- Changed: "Export PDF" now uses the browser's native print ability. This fixes layout issues and eliminates font problems.
 - Fixed: "Context Size" setting are not correctly applied
 
 25/02/22
@@ -124,10 +124,15 @@ With Swiftproxy, you can access high-performance, secure proxies to enhance your
 
 Live demo: <a href="https://deep-research.ataw.top" target="_blank">https://deep-research.ataw.top</a>
 
+### Deployment modes
+
+- **Client Mode**: users enter their own API keys in the browser. This is the best fit for static deployments such as EdgeOne Pages or `pnpm generate`.
+- **Server Mode**: API keys are configured as server-side environment variables, so users do not need to enter keys in the UI. This requires an SSR/Nitro runtime such as the Docker image; it is not available in purely static deployments.
+
 ### Self hosted
 
 #### Server Mode (Recommended)
-Deploy with environment variables - users don't need to configure API keys:
+Deploy with environment variables - users don't need to configure API keys. Use this mode when you can run the Nuxt server:
 
 **Using Docker with environment variables:**
 
@@ -145,12 +150,13 @@ docker run -p 3000:3000 \
 **Using Docker with .env file:**
 
 ```bash
-# Create .env file with your configuration
+# Copy .env.example and update it with your configuration
+cp .env.example .env
 docker run -p 3000:3000 --env-file .env anotia/deep-research-web:latest
 ```
 
 #### Client Mode (Traditional)
-Users configure their own API keys in the browser:
+Users configure their own API keys in the browser. Use this mode for static deployments:
 
 One-click deploy with [EdgeOne Pages](https://edgeone.ai/products/pages):
 
@@ -194,6 +200,20 @@ docker run -p 3000:3000 --name deep-research-web -d deep-research-web
 | `NUXT_PUBLIC_TAVILY_ADVANCED_SEARCH` | Use Tavily advanced search | `false` |
 | `NUXT_PUBLIC_TAVILY_SEARCH_TOPIC` | Tavily search topic | `general` |
 | `NUXT_PUBLIC_GOOGLE_PSE_ID` | Google PSE ID | - |
+
+#### Provider values
+
+| Type | Supported values |
+|------|------------------|
+| AI provider | `openai-compatible`, `siliconflow`, `302-ai`, `infiniai`, `openrouter`, `deepseek`, `ollama` |
+| Web search provider | `tavily`, `firecrawl`, `google-pse` |
+
+Notes:
+
+- `NUXT_WEB_SEARCH_API_KEY` supports comma-separated keys for Tavily and Google PSE, for example `key1,key2,key3`.
+- Google PSE requires both `NUXT_WEB_SEARCH_API_KEY` and `NUXT_PUBLIC_GOOGLE_PSE_ID`.
+- Firecrawl self-hosted deployments can set `NUXT_WEB_SEARCH_API_BASE`.
+- Ollama uses `http://localhost:11434/v1` as the default API base. When running the app inside Docker, `localhost` refers to the container itself, so set `NUXT_AI_API_BASE` to a reachable host or Docker network address if Ollama runs outside the container.
 
 ---
 

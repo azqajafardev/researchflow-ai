@@ -4,17 +4,18 @@
 
 特色：
 
-- 🚀 **隐私安全**：所有配置和 API 请求均在浏览器端完成
+- 🚀 **隐私安全**：在客户端模式下，配置和 API 请求均在浏览器端完成
 - 🕙 **实时反馈**：流式传输 AI 响应并在界面实时展示
-- 🌳 **搜索可视化**：使用树状结构展示研究过程，支持使用英文搜索词
+- 🌳 **搜索可视化**：使用树状结构展示研究过程，支持使用多种语言搜索
 - 📄 **支持导出 PDF**：将最终研究报告导出为 Markdown 和 PDF 格式
 - 🤖 **多模型支持**：底层使用纯提示词而非结构化输出等新特性，兼容更多大模型供应商
+- 🐳 **Docker 支持**：使用一行命令部署到你的环境中
 - 🔧 **服务端模式**：通过环境变量部署，用户无需配置 API 密钥
 
 当前支持的供应商：
 
-- AI 服务：OpenAI compatible, SiliconFlow, DeepSeek, OpenRouter, Ollama 等
-- 联网搜索服务：Tavily (每月 1000 次免费搜索), Firecrawl（支持自部署）
+- AI 服务：OpenAI compatible, SiliconFlow, InfiniAI, DeepSeek, OpenRouter, Ollama 等
+- 联网搜索服务：Tavily (每月 1000 次免费搜索), Firecrawl（支持自部署）, Google PSE
 
 喜欢本项目请点 ⭐ 收藏！
 
@@ -109,10 +110,15 @@
 
 在线演示：<a href="https://deep-research.ataw.top" target="_blank">https://deep-research.ataw.top</a>
 
+### 部署模式
+
+- **客户端模式**：用户在浏览器中自行填写 API 密钥。适合 EdgeOne Pages 或 `pnpm generate` 这类静态部署。
+- **服务端模式**：API 密钥通过服务端环境变量配置，用户无需在界面中填写密钥。该模式需要 Docker 镜像等 SSR/Nitro 运行环境，不适用于纯静态部署。
+
 ### 自托管部署
 
 #### 服务端模式（推荐）
-通过环境变量部署，用户无需配置 API 密钥：
+通过环境变量部署，用户无需配置 API 密钥。请在可以运行 Nuxt 服务端的环境中使用该模式：
 
 **使用 Docker 和环境变量：**
 
@@ -130,12 +136,13 @@ docker run -p 3000:3000 \
 **使用 Docker 和 .env 文件：**
 
 ```bash
-# 创建 .env 文件并填入配置
+# 复制 .env.example 并填入配置
+cp .env.example .env
 docker run -p 3000:3000 --env-file .env anotia/deep-research-web:latest
 ```
 
 #### 客户端模式（传统）
-用户需要在浏览器中自行配置 API 密钥：
+用户需要在浏览器中自行配置 API 密钥。静态部署请使用该模式：
 
 使用 [EdgeOne Pages](https://edgeone.ai/products/pages) 一键部署：
 
@@ -179,6 +186,20 @@ docker run -p 3000:3000 --name deep-research-web -d deep-research-web
 | `NUXT_PUBLIC_TAVILY_ADVANCED_SEARCH` | 使用 Tavily 高级搜索 | `false` |
 | `NUXT_PUBLIC_TAVILY_SEARCH_TOPIC` | Tavily 搜索主题 | `general` |
 | `NUXT_PUBLIC_GOOGLE_PSE_ID` | Google PSE ID | - |
+
+#### Provider 配置值
+
+| 类型 | 支持的值 |
+|------|----------|
+| AI 服务商 | `openai-compatible`, `siliconflow`, `302-ai`, `infiniai`, `openrouter`, `deepseek`, `ollama` |
+| 联网搜索服务商 | `tavily`, `firecrawl`, `google-pse` |
+
+说明：
+
+- `NUXT_WEB_SEARCH_API_KEY` 支持为 Tavily 和 Google PSE 配置逗号分隔的多个密钥，例如 `key1,key2,key3`。
+- Google PSE 需要同时配置 `NUXT_WEB_SEARCH_API_KEY` 和 `NUXT_PUBLIC_GOOGLE_PSE_ID`。
+- Firecrawl 自部署可以通过 `NUXT_WEB_SEARCH_API_BASE` 配置接口地址。
+- Ollama 默认 API Base 为 `http://localhost:11434/v1`。如果应用运行在 Docker 容器内，`localhost` 指向容器自身；若 Ollama 运行在宿主机或其他容器中，请将 `NUXT_AI_API_BASE` 设置为容器可访问的宿主机地址或 Docker 网络地址。
 
 ---
 
